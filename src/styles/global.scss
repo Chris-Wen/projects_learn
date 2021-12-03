@@ -1,0 +1,56 @@
+@import './variables.scss';
+
+body {
+  height: 100%;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-family: Chinese Quote,-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Hiragino Sans GB,Microsoft YaHei,Helvetica Neue,Helvetica,Arial,sans-serif;
+  //禁止屏幕抖动
+  padding-right: calc(100vw - 100%);
+}
+
+label {
+  font-weight: 600;
+}
+
+ul,li {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.no-padding {
+  padding: 0 !important;
+}
+a:focus,
+a:active {
+  outline: none;
+}
+a,
+a:focus,
+a:hover {
+  cursor: pointer;
+  color: inherit;
+  text-decoration: none;
+}
+.fr { float: right; }
+.fl { float: left; }
+
+/* 去除type=number的上下箭头 */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+}
+input[type='number'] {
+  -moz-appearance: textfield !important;
+}
+
+//开发使用
+.dev { border: 1px solid red !important }
