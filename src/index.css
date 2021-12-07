@@ -1,3 +1,7 @@
 .dev {
   border: 1px solid red !important;
 }
+.page-tb {
+  padding: 24px;
+  background: #fff;
+}
