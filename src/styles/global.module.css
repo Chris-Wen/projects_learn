@@ -1,1 +1,19 @@
-
+.btn {
+  cursor: pointer;
+  padding: 10px 5px;
+}
+.danger-color {
+  color: #f5222d;
+}
+.primary-color {
+  color: #40a9ff;
+}
+.info-color {
+  color: rgba(0, 0, 0, 0.45);
+}
+.success-color {
+  color: #52c41a;
+}
+.td-max-width {
+  max-width: 25%;
+}

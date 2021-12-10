@@ -1,18 +1,24 @@
 import { lazy } from 'react'
 
-const routes = [
-  {
-    path: '/mpManage',
-    name: '小程序管理',
-    key: 'mpManage',
-    component: lazy(() => import('@/pages/mpM/index.js')),
-  },
-  {
-    path: '/classManage',
-    name: '班级管理',
-    key: 'classManage',
-    component: lazy(() => import('@/pages/classM/index.js')),
-  },
-]
+let routes = []
+const staticRoutes = []
 
+const files = require.context('@/pages/', true, /\.js$/)
+// eslint-disable-next-line array-callback-return
+files.keys().map((key) => {
+  if (key.includes('/components/')) return false
+
+  const splitFileName = key.split('.')
+  const path = splitFileName[1]
+  const classObj = files(key).default
+  routes.push({
+    path,
+    key: path,
+    name: classObj.RouterName || classObj.name,
+    component: lazy(() => import(`@/pages/${key.split('./')[1]}`)),
+  })
+})
+
+routes = routes.concat(staticRoutes)
+console.log(routes)
 export default routes
