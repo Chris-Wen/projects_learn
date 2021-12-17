@@ -3,12 +3,13 @@ import { Button, Table, Modal, Form, Input, Popconfirm } from 'antd'
 import Image from '@/components/Image'
 import styles from '@/styles/global.module.css'
 import classNames from 'classnames/bind'
+import ImageUploader from '@/components/ImageUploader'
 
 let cx = classNames.bind(styles)
 
 export default class OperationManage extends Component {
   state = {
-    visible: false,
+    visible: true,
     btnLoading: false,
     isAddAction: false,
     loading: true,
@@ -220,7 +221,7 @@ const ModalFormCreate = Form.create({
       return (
         <Form>
           <Form.Item label='社区名称' {...formItemLayout}>
-            {getFieldDecorator('name', nameOptions)(<Input placeholder='请输入' allowClear />)}
+            {getFieldDecorator('name', nameOptions)(<ImageUploader />)}
           </Form.Item>
           <Form.Item label='跳转链接' {...formItemLayout}>
             {getFieldDecorator('appid', appidOptions)(<Input placeholder='请输入' allowClear />)}
