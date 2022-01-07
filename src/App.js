@@ -11,7 +11,7 @@ function App() {
           {routes.map((router) => (
             <Route exact {...router} />
           ))}
-          <Redirect exact from='/' to='/mpManage' />
+          <Redirect exact from='/' to='/appletsM/index' />
         </Switch>
       </Suspense>
     </HashRouter>

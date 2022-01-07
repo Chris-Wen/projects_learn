@@ -11,6 +11,7 @@ files.keys().map((key) => {
   const splitFileName = key.split('.')
   const path = splitFileName[1]
   const classObj = files(key).default
+
   routes.push({
     path,
     key: path,

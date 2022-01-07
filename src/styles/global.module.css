@@ -1,18 +1,24 @@
+:root {
+  --primary: #40a9ff;
+  --info: rgba(0, 0, 0, 0.45);
+  --success: #52c41a;
+  --danger: #f5222d;
+}
 .btn {
   cursor: pointer;
   padding: 10px 5px;
 }
 .danger-color {
-  color: #f5222d;
+  color: var(--danger);
 }
 .primary-color {
-  color: #40a9ff;
+  color: var(--primary);
 }
 .info-color {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--info);
 }
 .success-color {
-  color: #52c41a;
+  color: var(--success);
 }
 .td-max-width {
   max-width: 25%;

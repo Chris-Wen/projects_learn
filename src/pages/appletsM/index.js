@@ -38,8 +38,11 @@ export default class AppletsManage extends Component {
       width: 200,
       key: 'operation',
       fixed: 'right',
-      // eslint-disable-next-line jsx-a11y/anchor-is-valid
-      render: (item) => <a onClick={() => this.handleModalStat(false, item)}>编辑</a>,
+      render: (item) => (
+        <Button type='link' onClick={() => this.handleModalStat(false, item)}>
+          编辑
+        </Button>
+      ),
     },
   ]
 
@@ -79,8 +82,6 @@ export default class AppletsManage extends Component {
     })
   }
 
-  handleChildEvent = (ref) => (this.childRefForm = ref)
-
   onSubmit = () => {
     this.childRefForm.validateFields((err, values) => {
       if (!err) {
@@ -119,7 +120,7 @@ export default class AppletsManage extends Component {
           cancelText='取消'
           confirmLoading={t.btnLoading}
         >
-          <ModalFormCreate {...t.editData} onChildEvent={this.handleChildEvent} />
+          <ModalFormCreate {...t.editData} bindRef={(ref) => (this.childRefForm = ref)} />
         </Modal>
       </div>
     )
@@ -138,7 +139,7 @@ const ModalFormCreate = Form.create({
 })(
   class extends Component {
     componentDidMount() {
-      typeof this.props.onChildEvent === 'function' && this.props.onChildEvent(this.props.form)
+      typeof this.props.bindRef === 'function' && this.props.bindRef(this.props.form)
     }
 
     render() {

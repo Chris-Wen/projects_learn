@@ -9,12 +9,19 @@ let cx = classNames.bind(styles)
 
 export default class OperationManage extends Component {
   state = {
-    visible: true,
+    visible: false,
     btnLoading: false,
     isAddAction: false,
     loading: true,
-    editData: { name: '', appid: '' },
+    editData: { pic: '', link: '' },
     dataSource: [],
+    pagination: {
+      total: 0,
+      current: 1,
+      pageSize: 10,
+      showSizeChanger: true,
+      showTotal: (total) => `共${total}条数据`,
+    },
   }
 
   // table columns config
@@ -95,11 +102,23 @@ export default class OperationManage extends Component {
     this.getData()
   }
 
-  getData() {
+  onPageChange = (current, pageSize) => {
+    this.getData({ current, pageSize })
+  }
+  onSizeChange = (current, pageSize) => {
+    this.getData({
+      current: 1,
+      pageSize,
+    })
+  }
+
+  getData = (params = {}) => {
     this.setState({ loading: true })
+    let { current, pageSize } = { ...this.state.pagination, ...params }
+    params = { current, pageSize }
     let dataSource = []
     setTimeout(() => {
-      for (let i = 0; i < 32; i++) {
+      for (let i = 0; i < pageSize; i++) {
         dataSource.push({
           key: i,
           id: `${(Math.random() * 1000).toFixed(0)}`,
@@ -109,7 +128,19 @@ export default class OperationManage extends Component {
           status: Math.random() > 0.5,
         })
       }
-      this.setState({ loading: false, dataSource })
+      var total = Math.ceil(Math.random() * 100)
+      this.setState(({ pagination }) => {
+        return {
+          loading: false,
+          dataSource,
+          pagination: {
+            ...pagination,
+            current,
+            pageSize,
+            total,
+          },
+        }
+      })
     }, 1000)
   }
 
@@ -118,7 +149,7 @@ export default class OperationManage extends Component {
    * @param {Boolean} isAdd
    * @param {Object} editData
    */
-  handleModalStat = (isAdd, editData = { name: '', appid: '' }) => {
+  handleModalStat = (isAdd, editData = { name: '', link: '' }) => {
     this.setState(({ visible }) => {
       var params = {
         visible: !visible,
@@ -138,13 +169,16 @@ export default class OperationManage extends Component {
     if (type === 'edit') {
       this.handleModalStat(false, data)
     } else if (type === 'delete') {
+      this.getData()
     } else {
+      this.getData({ current: 1 })
     }
   }
 
   handleChildEvent = (ref) => (this.childRefForm = ref)
 
   onSubmit = () => {
+    console.log(this.childRefForm)
     this.childRefForm.validateFields((err, values) => {
       if (!err) {
         this.setState({ btnLoading: true })
@@ -157,7 +191,7 @@ export default class OperationManage extends Component {
           this.setState({
             btnLoading: false,
             visible: false,
-            editData: { name: '', appid: '' },
+            editData: { pic: '', link: '' },
           })
         }, 3000)
       }
@@ -172,7 +206,16 @@ export default class OperationManage extends Component {
         <Button type='primary' icon='plus' onClick={() => this.handleModalStat(true)} style={{ marginBottom: 16 }}>
           新建
         </Button>
-        <Table columns={this.columns} dataSource={t.dataSource} loading={t.loading}></Table>
+        <Table
+          pagination={{
+            ...t.pagination,
+            onShowSizeChange: this.onSizeChange,
+            onChange: this.onPageChange,
+          }}
+          columns={this.columns}
+          dataSource={t.dataSource}
+          loading={t.loading}
+        ></Table>
         <Modal
           visible={t.visible}
           title={t.isAddAction ? '新建' : '编辑'}
@@ -194,8 +237,8 @@ OperationManage.RouterName = '运营位管理'
 const ModalFormCreate = Form.create({
   mapPropsToFields(props) {
     return {
-      name: Form.createFormField({ value: props.name }),
-      appid: Form.createFormField({ value: props.appid }),
+      pic: Form.createFormField({ value: props.pic }),
+      link: Form.createFormField({ value: props.link }),
     }
   },
 })(
@@ -208,23 +251,20 @@ const ModalFormCreate = Form.create({
       const formItemLayout = { labelCol: { span: 8 }, wrapperCol: { span: 14 } }
       const { getFieldDecorator } = this.props.form
       const nameOptions = {
-        validateTrigger: 'onBlur',
-        rules: [
-          { required: true, whitespace: true, message: '请输入社区名称' },
-          { max: 15, message: '不超过15字' },
-        ],
+        validateTrigger: 'onChange',
+        rules: [{ required: true, message: '请上传图片' }],
       }
-      const appidOptions = {
+      const linkOptions = {
         validateTrigger: 'onBlur',
         rules: [{ required: true, whitespace: true, message: '请输入链接' }],
       }
       return (
         <Form>
-          <Form.Item label='社区名称' {...formItemLayout}>
-            {getFieldDecorator('name', nameOptions)(<ImageUploader />)}
+          <Form.Item label='上传图片' {...formItemLayout}>
+            {getFieldDecorator('pic', nameOptions)(<ImageUploader />)}
           </Form.Item>
           <Form.Item label='跳转链接' {...formItemLayout}>
-            {getFieldDecorator('appid', appidOptions)(<Input placeholder='请输入' allowClear />)}
+            {getFieldDecorator('link', linkOptions)(<Input placeholder='请输入' allowClear />)}
           </Form.Item>
         </Form>
       )
