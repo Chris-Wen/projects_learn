@@ -24,7 +24,7 @@ service.interceptors.request.use(
   (config) => {
     // 添加取消标记
     config.cancelToken = new axios.CancelToken((cancel) => {
-      requestPool.push({ id: `${config.url}&${config.method}`, f: cancel })
+      requestPool.push({ id: `${config.url}&${config.method}`, cancel })
     })
     let _config = config
     try {
@@ -47,7 +47,10 @@ service.interceptors.response.use(
   (config) => {
     //移除request 取消函数标识
     requestPool.forEach((r, i) => {
-      if (r.u === `${config.url}&${config.method}`) {
+      //同一个请求，取消请求并移除
+      if (r.id === `${config.url}&${config.method}`) {
+        r.cancel()
+        requestPool.splice(i, 1)
       }
     })
     if (config.status === 200 && config.data.status === 403) {
