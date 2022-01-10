@@ -4,7 +4,7 @@ import { Button, Form, Icon, Input, Popover, Radio, Row, Col, Tag, InputNumber }
 import ImageUploader from '@/components/ImageUploader'
 import styles from './style.module.css'
 import classNames from 'classnames/bind'
-import { getSubject } from '@/apis/global'
+import { getSubject, getGrade } from '@/apis/global'
 import { resJudge } from '@/utils/global'
 
 let cx = classNames.bind(styles)
@@ -12,13 +12,40 @@ let cx = classNames.bind(styles)
 class CourseForm extends Component {
   state = {
     tags: [],
+    gTags: [],
     courseOption: [],
     gradeOption: '请先选择科目',
   }
 
+  getGradeData = async (id) => {
+    let r = await getGrade(id)
+    resJudge(r) && this.setState({ gradeOption: r.data })
+  }
+
   async componentDidMount() {
-    let r = await getSubject()
+    let r = await getSubject().catch((e) => console.log(e))
+    console.log(1, r)
     resJudge(r) && this.setState({ courseOption: r.data })
+  }
+
+  handleSubject = (val) => {
+    val && this.getGradeData(val)
+    for (let i in this.state.courseOption) {
+      if (this.state.courseOption[i].id === val) {
+        this.setState({
+          tags: [this.state.courseOption[i]],
+          gTags: [],
+        })
+        return
+      }
+    }
+  }
+
+  handleClose = (val) => {
+    this.props.form.setFieldsValue({
+      subjectId: undefined,
+    })
+    this.setState({ tags: [], gradeOption: '请先选择科目' })
   }
 
   handleSubmit = (submitType) => {
@@ -33,7 +60,6 @@ class CourseForm extends Component {
       wrapperCol: { span: 16 },
     }
     let { courseOption, gradeOption } = this.state
-    console.log(courseOption)
     let { state: t } = this
     const { getFieldDecorator } = this.props.form
 
@@ -53,9 +79,29 @@ class CourseForm extends Component {
         <Form.Item label='所属科目'>
           {getFieldDecorator('subjectId', {
             rules: [{ required: true, message: '请选择科目' }],
-          })(<CourseOption text='点击选择科目' options={courseOption} tags={t.tags} />)}
+          })(
+            <CourseOption
+              text='点击选择科目'
+              options={courseOption}
+              tags={t.tags}
+              onChange={this.handleSubject}
+              onClose={(val) => this.handleClose(val, 'tags')}
+            />,
+          )}
         </Form.Item>
-        <Form.Item label='适合年龄'>{/* <CourseOption text='点击选择年级' options={gradeOption} /> */}</Form.Item>
+        <Form.Item label='适合年龄'>
+          {getFieldDecorator('ageId', {
+            rules: [{ required: true, message: '请选择科目' }],
+          })(
+            <CourseOption
+              text='点击选择年级'
+              options={gradeOption}
+              tags={t.gTags}
+              onChange={this.handleSubject}
+              onClose={(val) => this.handleClose(val, 'tags')}
+            />,
+          )}
+        </Form.Item>
         <Form.Item label='课程标签'>{/* <CourseOption text='点击选择科目' options={courseOption} /> */}</Form.Item>
         <Form.Item label='课程头图'>
           {getFieldDecorator('courseFirstPicture', {
@@ -154,7 +200,7 @@ class CourseForm extends Component {
  * @returns Component
  */
 let PopContent = (props) => (
-  <Radio.Group onChange={({ target: { value } }) => props.onChange(value)} value={props.id}>
+  <Radio.Group onChange={({ target: { value } }) => props.onChange(value)} value={props.value}>
     <Row style={{ maxWidth: 500 }}>
       {props.options?.map((item, i) => (
         <Col span={8} className={cx('col')} key={i}>
@@ -170,37 +216,26 @@ let PopContent = (props) => (
  * @param {object} props
  * @returns Component
  */
-class CourseOption extends Component {
-  constructor(props) {
-    super(props)
-    console.log(this.props)
-    this.state = {
-      ...props,
-    }
-  }
-
-  render() {
-    console.log(11, this.props)
-    let { tags = [], text = '', type = 'right', ..._props } = this.state
-    return (
-      <>
-        {tags?.map((tag, i) => (
-          <Tag closable={true} onClose={() => this.props.onClose(tag)} key={i} color='blue'>
-            {tag.name}
-          </Tag>
-        ))}
-        <Popover
-          content={Array.isArray(_props.options) ? <PopContent {..._props} /> : _props.options || ''}
-          trigger='click'
-          placement='right'
-        >
-          <span className={cx('info-button')}>
-            {text} <Icon type={type} />
-          </span>
-        </Popover>
-      </>
-    )
-  }
+const CourseOption = (props) => {
+  let { tags = [], text = '', type = 'right', ..._props } = props
+  return (
+    <>
+      {tags?.map((tag, i) => (
+        <Tag closable={true} onClose={() => props.onClose(tag.id)} key={i} color='blue'>
+          {tag.name}
+        </Tag>
+      ))}
+      <Popover
+        content={Array.isArray(_props.options) ? <PopContent {..._props} /> : _props.options || ''}
+        trigger='click'
+        placement='right'
+      >
+        <span className={cx('info-button')}>
+          {text} <Icon type={type} />
+        </span>
+      </Popover>
+    </>
+  )
 }
 
 CourseOption.propTypes = {
