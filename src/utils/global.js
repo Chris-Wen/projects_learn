@@ -2,4 +2,6 @@
 import db from './storage'
 export const UPLOAD_URL = `${process.env.REACT_APP_BASE_URL}manage/public/file/fastDfs/upload`
 
-export let getToken = () => db.get('ACCESS_TOKEN', '')
+export let getToken = () => db.get('ACCESS_TOKEN', 'test')
+
+export let resJudge = (r) => r?.code === 200

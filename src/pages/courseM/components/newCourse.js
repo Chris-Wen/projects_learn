@@ -4,22 +4,22 @@ import { Button, Form, Icon, Input, Popover, Radio, Row, Col, Tag, InputNumber }
 import ImageUploader from '@/components/ImageUploader'
 import styles from './style.module.css'
 import classNames from 'classnames/bind'
+import { getSubject } from '@/apis/global'
+import { resJudge } from '@/utils/global'
 
 let cx = classNames.bind(styles)
 
-class NewCourseForm extends Component {
+class CourseForm extends Component {
   state = {
-    tags: ['早教', '语言'],
-    courseOption: [
-      { text: '早教', value: 0 },
-      { text: '语言', value: 1 },
-      { text: '自然科学', value: 2 },
-      { text: '学科', value: 3 },
-    ],
+    tags: [],
+    courseOption: [],
     gradeOption: '请先选择科目',
   }
 
-  componentDidMount() {}
+  async componentDidMount() {
+    let r = await getSubject()
+    resJudge(r) && this.setState({ courseOption: r.data })
+  }
 
   handleSubmit = (submitType) => {
     if (submitType) {
@@ -33,6 +33,7 @@ class NewCourseForm extends Component {
       wrapperCol: { span: 16 },
     }
     let { courseOption, gradeOption } = this.state
+    console.log(courseOption)
     let { state: t } = this
     const { getFieldDecorator } = this.props.form
 
@@ -54,12 +55,8 @@ class NewCourseForm extends Component {
             rules: [{ required: true, message: '请选择科目' }],
           })(<CourseOption text='点击选择科目' options={courseOption} tags={t.tags} />)}
         </Form.Item>
-        <Form.Item label='适合年龄'>
-          <CourseOption text='点击选择科目' options={gradeOption} />
-        </Form.Item>
-        <Form.Item label='课程标签'>
-          <CourseOption text='点击选择科目' options={courseOption} />
-        </Form.Item>
+        <Form.Item label='适合年龄'>{/* <CourseOption text='点击选择年级' options={gradeOption} /> */}</Form.Item>
+        <Form.Item label='课程标签'>{/* <CourseOption text='点击选择科目' options={courseOption} /> */}</Form.Item>
         <Form.Item label='课程头图'>
           {getFieldDecorator('courseFirstPicture', {
             rules: [{ required: true, message: '请上传课程头图' }],
@@ -157,11 +154,11 @@ class NewCourseForm extends Component {
  * @returns Component
  */
 let PopContent = (props) => (
-  <Radio.Group onChange={props.onChange} value={props.value}>
-    <Row>
+  <Radio.Group onChange={({ target: { value } }) => props.onChange(value)} value={props.id}>
+    <Row style={{ maxWidth: 500 }}>
       {props.options?.map((item, i) => (
         <Col span={8} className={cx('col')} key={i}>
-          <Radio value={item.value}>{item.text}</Radio>
+          <Radio value={item.id}>{item.name}</Radio>
         </Col>
       ))}
     </Row>
@@ -173,27 +170,37 @@ let PopContent = (props) => (
  * @param {object} props
  * @returns Component
  */
-let CourseOption = (props) => {
-  let { tags = [], text = '', type = 'right', ..._props } = props
+class CourseOption extends Component {
+  constructor(props) {
+    super(props)
+    console.log(this.props)
+    this.state = {
+      ...props,
+    }
+  }
 
-  return (
-    <>
-      {tags?.map((tag, i) => (
-        <Tag closable={true} onClose={() => props.onClose(tag)} key={i} color='blue'>
-          {tag}
-        </Tag>
-      ))}
-      <Popover
-        content={Array.isArray(_props.options) ? <PopContent {..._props} /> : _props.options || ''}
-        trigger='click'
-        placement='right'
-      >
-        <span className={cx('info-button')}>
-          {text} <Icon type={type} />
-        </span>
-      </Popover>
-    </>
-  )
+  render() {
+    console.log(11, this.props)
+    let { tags = [], text = '', type = 'right', ..._props } = this.state
+    return (
+      <>
+        {tags?.map((tag, i) => (
+          <Tag closable={true} onClose={() => this.props.onClose(tag)} key={i} color='blue'>
+            {tag.name}
+          </Tag>
+        ))}
+        <Popover
+          content={Array.isArray(_props.options) ? <PopContent {..._props} /> : _props.options || ''}
+          trigger='click'
+          placement='right'
+        >
+          <span className={cx('info-button')}>
+            {text} <Icon type={type} />
+          </span>
+        </Popover>
+      </>
+    )
+  }
 }
 
 CourseOption.propTypes = {
@@ -206,6 +213,6 @@ CourseOption.defaultProps = {
   onChange: () => {},
 }
 
-const NewCourse = Form.create({ name: 'newCourse' })(NewCourseForm)
+const NewCourse = Form.create({ name: 'newCourse' })(CourseForm)
 
 export default NewCourse

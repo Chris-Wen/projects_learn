@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { getToken } from './global'
+import { message } from 'antd'
 
 const timeout = 10 * 1000 // 请求超时时间，10s
 const messageDuration = 5 * 1000 // 提示信息显示时长
@@ -16,7 +17,6 @@ const service = axios.create({
   validateStatus: function (status) {
     return status === 200
   },
-  withCredentials: true,
 })
 
 // request interceptor
@@ -29,7 +29,7 @@ service.interceptors.request.use(
     let _config = config
     try {
       if (getToken()) {
-        _config.headers['Authorization'] = getToken()
+        _config.headers['token'] = getToken()
       }
     } catch (e) {
       console.error(e)
@@ -53,21 +53,31 @@ service.interceptors.response.use(
         requestPool.splice(i, 1)
       }
     })
-    if (config.status === 200 && config.data.status === 403) {
+
+    //操作异常、接口异常状态统一弹窗
+    if (config.status === 200 && config.data.code !== 200) {
+      message.error({
+        duration: messageDuration,
+        content: config.data.message || '系统开小差了，请稍后重试!!!',
+      })
     }
-    return config
+    return config.data
   },
   (error) => {
     if (error.response) {
-      // const errorMessage = error.response.data === null ? '系统内部异常，请联系网站管理员' : error.response.data.message
+      const errorMessage = error.response.data ? '系统内部异常，请联系网站管理员' : error.response.data.message
       switch (error.response.status) {
-        case 404:
-          break
         case 403:
-          break
-        case 401:
+          message.error({
+            duration: messageDuration,
+            content: '很抱歉，您暂无该操作权限',
+          })
           break
         default:
+          message.error({
+            duration: messageDuration,
+            content: errorMessage,
+          })
           break
       }
     }
@@ -75,4 +85,69 @@ service.interceptors.response.use(
   },
 )
 
-export default service
+const request = {
+  post(url, params, type) {
+    return service.post(url, params, {
+      transformRequest: [
+        (params) => {
+          return tansParams(params)
+        },
+      ],
+      headers: {
+        'Content-Type': type || 'application/x-www-form-urlencoded',
+      },
+    })
+  },
+  put(url, params) {
+    return service.put(url, params, {
+      transformRequest: [
+        (params) => {
+          return tansParams(params)
+        },
+      ],
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    })
+  },
+  get(url, params, type) {
+    let _params
+    if (Object.is(params, undefined)) {
+      _params = ''
+    } else {
+      _params = '?'
+      for (const key in params) {
+        if (params.hasOwnProperty(key) && params[key] !== null) {
+          _params += `${key}=${params[key]}&`
+        }
+      }
+    }
+    return service.get(`${url}${_params}`)
+  },
+  delete(url, params) {
+    let _params
+    if (Object.is(params, undefined)) {
+      _params = ''
+    } else {
+      _params = '?'
+      for (const key in params) {
+        if (params.hasOwnProperty(key) && params[key] !== null) {
+          _params += `${key}=${params[key]}&`
+        }
+      }
+    }
+    return service.delete(`${url}${_params}`)
+  },
+}
+
+function tansParams(params) {
+  let result = ''
+  Object.keys(params).forEach((key) => {
+    if (!Object.is(params[key], undefined) && !Object.is(params[key], null)) {
+      result += encodeURIComponent(key) + '=' + encodeURIComponent(params[key]) + '&'
+    }
+  })
+  return result
+}
+
+export default request

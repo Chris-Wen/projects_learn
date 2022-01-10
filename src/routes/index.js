@@ -12,12 +12,14 @@ files.keys().map((key) => {
   const path = splitFileName[1]
   const classObj = files(key).default
 
-  routes.push({
-    path,
-    key: path,
-    name: classObj.RouterName || classObj.name,
-    component: lazy(() => import(`@/pages/${key.split('./')[1]}`)),
-  })
+  if (classObj) {
+    routes.push({
+      path,
+      key: path,
+      name: classObj?.RouterName || classObj.name,
+      component: lazy(() => import(`@/pages/${key.split('./')[1]}`)),
+    })
+  }
 })
 
 routes = routes.concat(staticRoutes)
