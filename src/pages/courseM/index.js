@@ -52,7 +52,7 @@ export default class CourseManage extends Component {
 
   handleModalStat = (name = 'newCourse', props = {}) => {
     let config = {
-      path: `pages/courseM/components/${name}.js`,
+      path: `pages/courseM/components/${name}/index.js`,
       title: name === 'newCourse' ? '新建课程' : '课程详情',
       width: '80%',
       style: { top: 20 },

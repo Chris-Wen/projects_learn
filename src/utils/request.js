@@ -3,7 +3,7 @@ import { getToken } from './global'
 import { message } from 'antd'
 
 const timeout = 10 * 1000 // 请求超时时间，10s
-const messageDuration = 5 * 1000 // 提示信息显示时长
+const messageDuration = 5 // 提示信息显示时长
 
 let requestPool = [] //每个ajax请求的取消函数和ajax标识
 const service = axios.create({
@@ -88,11 +88,6 @@ service.interceptors.response.use(
 const request = {
   post(url, params, type) {
     return service.post(url, params, {
-      transformRequest: [
-        (params) => {
-          return tansParams(params)
-        },
-      ],
       headers: {
         'Content-Type': type || 'application/x-www-form-urlencoded',
       },

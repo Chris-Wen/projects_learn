@@ -7,3 +7,7 @@ export async function getSubject() {
 export async function getGrade(subjectId) {
   return await request.get(`/manage/course/listCourseAgeBySubject?subjectId=${subjectId}`)
 }
+
+export async function getCourseType() {
+  return await request.get('/manage/course/listCourseType')
+}

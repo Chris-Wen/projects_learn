@@ -104,9 +104,6 @@ module.exports = function (proxy, allowedHost) {
       [process.env.REACT_APP_BASE_URL]: {
         target: process.env.REACT_APP_BASE_URL,
         changeOrigin: true,
-        // pathRewrite: {
-        //   ['^' + process.env.REACT_APP_BASE_URL]: ''
-        // }
       },
     },
     before(app, server) {
