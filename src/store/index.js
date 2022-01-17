@@ -1,9 +1,12 @@
-import { createStore } from 'redux'
+import { createStore, combineReducers } from 'redux'
+import courseReducer from './reducers/course'
 
-function reducer(state, action) {
-  return state
-}
+const reducers = combineReducers({
+  course: courseReducer,
+})
 
-let store = createStore(reducer)
+console.log(reducers)
+
+let store = createStore(reducers)
 
 export default store

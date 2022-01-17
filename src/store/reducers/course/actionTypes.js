@@ -1,0 +1,2 @@
+export const SET_COURSE_TYPE = 'SET_COURSE_TYPE'
+export const SET_SUBJECTS = 'SET_SUBJECTS'
