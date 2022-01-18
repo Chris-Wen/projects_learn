@@ -5,7 +5,7 @@ import db from '@/utils/storage'
 
 // 课程类型Action
 export const changeCourseTypeAction = (payload) => {
-  db.save('courseType', payload)
+  db.save('courseType', payload, true)
   return {
     type: actionTyps.SET_COURSE_TYPE,
     payload,
@@ -14,7 +14,7 @@ export const changeCourseTypeAction = (payload) => {
 
 //科目类型Action
 export const changeSubjectsAction = (payload) => {
-  db.save('subjects', payload)
+  db.save('subjects', payload, true)
   return {
     type: actionTyps.SET_SUBJECTS,
     payload,

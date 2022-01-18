@@ -3,7 +3,7 @@ import db from '@/utils/storage'
 
 let defaultState = {
   courseType: db.get('courseType', []),
-  subjects: db.get('subject', []),
+  subjects: db.get('subjects', []),
 }
 
 function courseReducer(state = defaultState, { type, payload = {} }) {

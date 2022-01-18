@@ -62,3 +62,13 @@
 .btn-tag {
   margin: 10px;
 }
+
+.image {
+  width: 150px;
+  margin: 10px;
+  height: auto;
+}
+
+.space-padding {
+  margin: 0 10px;
+}

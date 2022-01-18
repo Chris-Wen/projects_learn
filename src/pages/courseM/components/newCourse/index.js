@@ -1,25 +1,46 @@
 import React, { Component } from 'react'
+import PropTypes from 'prop-types'
 import { Button, Form, Input, Radio, InputNumber, message } from 'antd'
 import ImageUploader from '@/components/ImageUploader'
-import styles from './style.module.css'
-import classNames from 'classnames/bind'
-import { getSubject, getGrade, getCourseType } from '@/apis/global'
-import { getCourseLabel, addCourse } from '@/apis/course'
+import { getGrade } from '@/apis/global'
+import { getCourseLabel, addCourse, updateCourse } from '@/apis/course'
 import { resJudge } from '@/utils/global'
 import { SubjectPopContent, PopoverSelection, GradePopContent, TagsSelection } from './component'
 import { integerReg, priceReg } from '@/utils/reg'
+import { connect } from 'react-redux'
+import { getCourseTypeAction, getSubjectsAction } from '@/store/reducers/course/action'
 
+import styles from './style.module.css'
+import classNames from 'classnames/bind'
 let cx = classNames.bind(styles)
 
 class CourseForm extends Component {
-  state = {
-    tags: [],
-    gTags: [],
-    cTags: [],
-    customTag: '',
-    courseOption: [],
-    gradeOption: '请先选择科目',
-    courseType: [],
+  static propTypes = { dataSource: PropTypes.object }
+
+  static propTypes = {
+    subjects: PropTypes.array.isRequired,
+    courseType: PropTypes.array.isRequired,
+  }
+
+  constructor(props) {
+    super(props)
+    let [tags, gTags, cTags, customTag] = [[], [], [], null]
+    if (props.dataSource) {
+      let t = props.dataSource
+      tags = [{ id: t.subjectId || -1, name: t.subjectName }]
+      gTags = t?.courseAgeList || []
+      cTags = t?.courseLabelList || []
+      customTag = t?.courseCustomizeLabel || null
+    }
+    this.state = {
+      tags,
+      gTags,
+      cTags,
+      customTag,
+      courseOption: props.subjects ?? [],
+      gradeOption: '请先选择科目',
+      courseType: props.courseType ?? [],
+    }
   }
 
   validPrice = (rule, value, callback) => {
@@ -50,13 +71,10 @@ class CourseForm extends Component {
   }
 
   async componentDidMount() {
-    let r = await Promise.all([getSubject(), getCourseType()]).catch((e) => console.log(e))
-    if (resJudge(r[0]) && resJudge(r[1])) {
-      this.setState({
-        courseOption: r[0].data,
-        courseType: r[1].data,
-      })
-    }
+    !this.props.subjects.length && this.props.getSubjectsAction()
+    !this.props.courseType.length && this.props.getCourseTypeAction()
+
+    this.props?.dataSource?.subjectId && this.getGradeData(this.props.dataSource.subjectId)
   }
 
   changeSubject = (val) => {
@@ -148,11 +166,15 @@ class CourseForm extends Component {
       if (!err) {
         params.courseLogo = params.courseFirstPicture[0]
         params.priceWithScore = `${params.priceWithScore}`
+        let isUpdate = !!this.props?.dataSource?.id
+        if (isUpdate) params.id = this.props?.dataSource?.id
 
-        let r = await addCourse(params)
+        let r = await (isUpdate ? updateCourse(params) : addCourse(params))
         if (resJudge(r)) {
-          message.success('课程创建成功')
-          this.props.hideModal()
+          message.success(isUpdate ? '修改成功' : '创建成功')
+          setTimeout(() => {
+            this.props.hideModal()
+          }, 1000)
           this.props.refresh && this.props.refresh()
         }
       } else {
@@ -167,7 +189,10 @@ class CourseForm extends Component {
       wrapperCol: { span: 16 },
     }
     let { courseOption, gradeOption } = this.state
-    let { state: t } = this
+    let {
+      state: t,
+      props: { dataSource: data },
+    } = this
     const { getFieldDecorator } = this.props.form
 
     return (
@@ -176,16 +201,19 @@ class CourseForm extends Component {
         <Form.Item label='课程名称'>
           {getFieldDecorator('courseName', {
             rules: [{ required: true, min: 3, max: 16, message: '请输入课程名称，3~16个字符' }],
+            initialValue: data?.courseName,
           })(<Input className={cx('input')} placeholder='请输入课程名称，3~16个字符' allowClear />)}
         </Form.Item>
         <Form.Item label='优势亮点'>
           {getFieldDecorator('courseSubtitle', {
             rules: [{ required: true, min: 3, max: 48, message: '请输入副标题，3~48个字符' }],
+            initialValue: data?.courseSubtitle,
           })(<Input.TextArea className={cx('text-area')} rows={3} placeholder='请输入副标题，3~48个字符' allowClear />)}
         </Form.Item>
         <Form.Item label='所属科目'>
           {getFieldDecorator('subjectId', {
             rules: [{ required: true, message: '请选择科目' }],
+            initialValue: data?.subjectId,
           })(
             <PopoverSelection
               text='点击选择科目'
@@ -200,7 +228,7 @@ class CourseForm extends Component {
         <Form.Item label='适合年龄'>
           {getFieldDecorator('ageId', {
             rules: [{ required: true, message: '请选择年龄阶段' }],
-            initialValue: [],
+            initialValue: data?.ageId ?? [],
           })(
             <PopoverSelection
               text='点击选择年级'
@@ -216,7 +244,7 @@ class CourseForm extends Component {
         <Form.Item label='课程标签'>
           {getFieldDecorator('courseLabelIdList', {
             rules: [{ required: true, message: '请选择课程标签' }],
-            initialValue: [],
+            initialValue: data?.courseLabelList ? data?.courseLabelList?.map(({ id }) => id) : [],
           })(
             <TagsSelection
               title='课程标签库'
@@ -231,6 +259,7 @@ class CourseForm extends Component {
         <Form.Item label='课程头图'>
           {getFieldDecorator('courseFirstPicture', {
             rules: [{ required: true, message: '请上传课程头图' }],
+            initialValue: data?.courseFirstPicture,
           })(
             <ImageUploader
               limit={4}
@@ -248,6 +277,7 @@ class CourseForm extends Component {
         <Form.Item label='课程介绍图'>
           {getFieldDecorator('coursePicture', {
             rules: [{ required: true, message: '请上传课程介绍图' }],
+            initialValue: data?.coursePicture,
           })(
             <ImageUploader
               limit={10}
@@ -264,6 +294,7 @@ class CourseForm extends Component {
         <Form.Item label='课程简介'>
           {getFieldDecorator('courseBriefIntroduction', {
             rules: [{ required: true, min: 1, max: 1000, message: '请填写课程简介,限1000字符' }],
+            initialValue: data?.courseBriefIntroduction,
           })(
             <Input.TextArea
               className={cx('text-area')}
@@ -278,6 +309,7 @@ class CourseForm extends Component {
         <Form.Item label='课程类型'>
           {getFieldDecorator('courseType', {
             rules: [{ required: true, message: '请选择课程类型' }],
+            initialValue: data?.courseType,
           })(
             <Radio.Group>
               {t.courseType.map((item) => (
@@ -294,17 +326,20 @@ class CourseForm extends Component {
               { required: true, message: '请输入课时数' },
               { pattern: integerReg, message: '请输入正整数' },
             ],
+            initialValue: data?.courseNodes,
           })(<InputNumber min={1} className={cx('input')} placeholder='请输入课时数' />)}
           节
         </Form.Item>
         <Form.Item label='不使用积分价格'>
           {getFieldDecorator('priceWithoutScore', {
             rules: [{ required: true, message: '请输入价格，且大于等于0' }, { validator: this.validPrice }],
+            initialValue: data?.priceWithoutScore,
           })(<Input className={cx('input-number')} placeholder='请输入' allowClear addonAfter='元' />)}
         </Form.Item>
         <Form.Item label='使用积分现金价格'>
           {getFieldDecorator('priceWithCash', {
             rules: [{ required: true, message: '请输入价格，且大于等于0' }, { validator: this.validPrice }],
+            initialValue: data?.priceWithCash,
           })(<Input className={cx('input-number')} placeholder='请输入' allowClear addonAfter='元' />)}
         </Form.Item>
         <Form.Item label='使用积分数'>
@@ -313,6 +348,7 @@ class CourseForm extends Component {
               { required: true, message: '请输入积分数,最大100000' },
               { pattern: /^[1-9]\d*$/, message: '请输入正整数' },
             ],
+            initialValue: data?.priceWithScore,
           })(<InputNumber min={1} max={100000} className={cx('input')} placeholder='请输入' />)}
           积分
         </Form.Item>
@@ -326,6 +362,14 @@ class CourseForm extends Component {
   }
 }
 
-const NewCourse = Form.create({ name: 'newCourse' })(CourseForm)
+const NewCourse = Form.create({ name: 'newCourse' })(
+  connect(
+    ({ course: { courseType, subjects } }) => ({
+      courseType,
+      subjects,
+    }),
+    { getCourseTypeAction, getSubjectsAction },
+  )(CourseForm),
+)
 
 export default NewCourse

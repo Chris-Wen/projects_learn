@@ -2,52 +2,69 @@ import React, { Component } from 'react'
 import { Form, Input, Select, Button, Tabs } from 'antd'
 import MainTable from './components/mainTable'
 import ModalWrapComponent from '@/components/ModalWrapComponent'
+import PropTypes from 'prop-types'
+import { connect } from 'react-redux'
+import { getCourseTypeAction } from '@/store/reducers/course/action'
+import { getCourseList, changeCourseStat, getCourseDetail } from '@/apis/course'
+import { resJudge } from '@/utils/global'
 
-export default class CourseManage extends Component {
+class CourseManage extends Component {
+  static propTypes = {
+    courseType: PropTypes.array.isRequired,
+    getCourseTypeAction: PropTypes.func.isRequired,
+  }
+
   state = {
     loading: false,
     dataSource: [],
+    searchParams: {},
     pagination: {
       total: 0,
       current: 1,
-      pageSize: 10,
+      size: 10,
     },
     activeTab: '0',
-    tabs: [
-      { value: '0', name: '全部' },
-      { value: '1', name: '邻里学堂' },
-      { value: '2', name: '惠普托育' },
+    courseState: [
+      { id: 1, name: '已上架' },
+      { id: 6, name: '已下架' },
     ],
   }
   modalRef = React.createRef()
 
   componentDidMount() {
     this.getData()
+    !this.props.courseType.length && this.props.getCourseTypeAction()
   }
-  onPageChange = (current, pageSize) => {
-    this.getData({ current, pageSize })
-  }
-  onSizeChange = (current, pageSize) => {
-    this.getData({
-      current: 1,
-      pageSize,
-    })
-  }
+  onPageChange = (current, size) => this.getData({ current, size })
 
-  handleSearch = (params) => {
+  onSizeChange = (current, size) => this.getData({ current: 1, size })
+
+  handleSearch = (params = {}) => {
+    this.setState(({ searchParams }) => ({ searchParams: { ...searchParams, ...params } }))
     params = {
       ...params,
       current: 1,
+    }
+    if (params.courseType !== this.state.activeTab) {
+      this.setState(() => ({ activeTab: (params.courseType ?? '0').toString() }))
     }
     this.getData(params)
   }
 
   handleChangeTab = (activeTab) => {
-    this.setState(() => ({
-      activeTab,
-    }))
+    this.setState(() => ({ activeTab }))
+    this.getData({ courseType: parseInt(activeTab) })
+  }
 
-    this.getData()
+  handleStat = async (id) => {
+    let r = await changeCourseStat(id)
+    resJudge(r) && this.getData()
+  }
+
+  handleDetail = async (name, id) => {
+    let r = await getCourseDetail(id)
+    resJudge(r) &&
+      this.handleModalStat(name, name === 'newCourse' ? { dataSource: r.data, refresh: this.getData } : r.data)
   }
 
   handleModalStat = (name = 'newCourse', props = {}) => {
@@ -60,44 +77,38 @@ export default class CourseManage extends Component {
     this.modalRef.current.initModal(config, props)
   }
 
-  getData = (params = {}) => {
+  getData = async (_params = {}) => {
     this.setState({ loading: true })
-    let { current, pageSize } = { ...this.state.pagination, ...params }
-    params = { current, pageSize }
+    let params = { ...this.state.pagination, ...this.state.searchParams, ..._params }
+    if (!params.courseType) params.courseType = undefined
+    try {
+      delete params.total
+    } catch (error) {}
+
     let dataSource = []
-    setTimeout(() => {
-      for (let i = 0; i < pageSize; i++) {
-        dataSource.push({
-          key: i,
-          id: `${(Math.random() * 1000).toFixed(0)}`,
-          num: `${(Math.random() * 1000).toFixed(0)}`,
-          campus: '东信社区',
-          name: '小葵花课堂',
-          status: Math.random() > 0.5,
-        })
-      }
-      var total = Math.ceil(Math.random() * 100)
-      this.setState(({ pagination }) => {
-        return {
-          loading: false,
-          dataSource,
-          pagination: {
-            ...pagination,
-            current,
-            pageSize,
-            total,
-          },
-        }
+    let r = await getCourseList(params)
+    if (resJudge(r)) {
+      dataSource = r.data.records
+      let total = r.data.total
+      this.setState({
+        loading: false,
+        dataSource,
+        pagination: {
+          current: params.current,
+          size: params.size,
+          total,
+        },
       })
-    }, 1000)
+    }
   }
 
   render() {
     const { state: t } = this
+    let tabsList = [{ id: 0, name: '全部' }, ...this.props.courseType]
     return (
       <>
         <div className='page-tb'>
-          <SearchForm handleSearch={this.handleSearch} />
+          <SearchForm handleSearch={this.handleSearch} tabsList={tabsList} courseState={t.courseState} />
           <Button
             type='primary'
             icon='plus'
@@ -109,8 +120,8 @@ export default class CourseManage extends Component {
         </div>
         <div className='page-tb' style={{ borderTop: '20px solid #eff3f6' }}>
           <Tabs activeKey={t.activeTab} onChange={this.handleChangeTab}>
-            {t.tabs.map((item, i) => (
-              <Tabs.TabPane tab={item.name} key={item.value}></Tabs.TabPane>
+            {tabsList.map((item) => (
+              <Tabs.TabPane tab={item.name} key={item.id}></Tabs.TabPane>
             ))}
           </Tabs>
           <MainTable
@@ -119,6 +130,9 @@ export default class CourseManage extends Component {
             pagination={t.pagination}
             onSizeChange={this.onSizeChange}
             onChange={this.onPageChange}
+            onStateChange={this.handleStat}
+            showDetail={this.handleDetail}
+            rowKey='id'
           />
           <ModalWrapComponent ref={this.modalRef} />
         </div>
@@ -130,6 +144,12 @@ CourseManage.RouterName = '课程管理'
 
 const SearchForm = Form.create({})(
   class extends Component {
+    static propTypes = {
+      tabsList: PropTypes.array.isRequired,
+      courseState: PropTypes.array.isRequired,
+      handleSearch: PropTypes.func.isRequired,
+    }
+
     handleSearch = (e) => {
       e.preventDefault()
       this.props.form.validateFields((err, values) => {
@@ -142,22 +162,27 @@ const SearchForm = Form.create({})(
       return (
         <Form layout='inline' onSubmit={this.handleSearch}>
           <Form.Item label='课程名称'>
-            {getFieldDecorator('className')(<Input placeholder='请输入课程名称' allowClear />)}
+            {getFieldDecorator('courseName')(<Input placeholder='请输入课程名称' allowClear />)}
           </Form.Item>
           <Form.Item label='课程类型'>
-            {getFieldDecorator('courseStat')(
+            {getFieldDecorator('courseType')(
               <Select placeholder='请选择' style={{ minWidth: 150 }} allowClear>
-                <Select.Option value='0'>全部</Select.Option>
-                <Select.Option value='1'>邻里学堂</Select.Option>
-                <Select.Option value='2'>惠普托育</Select.Option>
+                {this.props.tabsList.map((item) => (
+                  <Select.Option value={item.id} key={item.id}>
+                    {item.name}
+                  </Select.Option>
+                ))}
               </Select>,
             )}
           </Form.Item>
           <Form.Item label='课程状态'>
-            {getFieldDecorator('state')(
+            {getFieldDecorator('courseAuditState')(
               <Select placeholder='请选择' style={{ minWidth: 150 }} allowClear>
-                <Select.Option value='1'>已上架</Select.Option>
-                <Select.Option value='2'>已下架</Select.Option>
+                {this.props.courseState.map((item) => (
+                  <Select.Option value={item.id} key={item.id}>
+                    {item.name}
+                  </Select.Option>
+                ))}
               </Select>,
             )}
           </Form.Item>
@@ -180,3 +205,5 @@ const SearchForm = Form.create({})(
     }
   },
 )
+
+export default connect(({ course: { courseType } }) => ({ courseType }), { getCourseTypeAction })(CourseManage)

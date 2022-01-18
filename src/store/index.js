@@ -1,12 +1,11 @@
-import { createStore, combineReducers } from 'redux'
+import { createStore, combineReducers, applyMiddleware } from 'redux'
 import courseReducer from './reducers/course'
+import thunk from 'redux-thunk'
 
 const reducers = combineReducers({
   course: courseReducer,
 })
 
-console.log(reducers)
-
-let store = createStore(reducers)
+let store = createStore(reducers, applyMiddleware(thunk))
 
 export default store

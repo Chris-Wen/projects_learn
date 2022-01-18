@@ -112,7 +112,7 @@ const request = {
     } else {
       _params = '?'
       for (const key in params) {
-        if (params.hasOwnProperty(key) && params[key] !== null) {
+        if (params.hasOwnProperty(key) && params[key] !== null && params[key] !== undefined) {
           _params += `${key}=${params[key]}&`
         }
       }

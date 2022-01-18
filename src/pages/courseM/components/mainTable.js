@@ -7,7 +7,7 @@ let cx = classNames.bind(styles)
 
 const MainTable = (props) => {
   let ConfirmComponent = (props) => {
-    let bool = props.type === 'on'
+    let bool = props.courseAuditState === 6
 
     return (
       <Popconfirm
@@ -25,7 +25,9 @@ const MainTable = (props) => {
         }
         onConfirm={props.onConfirm}
       >
-        <Button type='link'>{bool ? '上架' : '下架'}</Button>
+        <Button className={cx('min-padding')} type='link'>
+          {bool ? '上架' : '下架'}
+        </Button>
       </Popconfirm>
     )
   }
@@ -33,7 +35,7 @@ const MainTable = (props) => {
     {
       align: 'center',
       title: '校区',
-      dataIndex: 'campus',
+      dataIndex: 'campusName',
       className: cx('td-max-width'),
       ellipsis: true,
     },
@@ -42,32 +44,40 @@ const MainTable = (props) => {
       title: '课程名称',
       className: cx('td-max-width'),
       ellipsis: true,
-      dataIndex: 'name',
+      dataIndex: 'courseName',
     },
     {
       align: 'center',
       title: '课程类型',
       width: 120,
-      dataIndex: 'num',
+      dataIndex: 'courseTypeName',
     },
     {
       align: 'center',
       title: '课程状态',
-      dataIndex: 'status',
-      render: (s) => <span className={cx(s ? 'success-color' : 'danger-color')}>{s ? '已上架' : '已下架'}</span>,
+      dataIndex: 'courseAuditState',
+      render: (s) => (
+        <span className={cx(s === 1 ? 'success-color' : 'danger-color')}>{s === 1 ? '已上架' : '已下架'}</span>
+      ),
     },
     {
       align: 'left',
       title: '操作',
-      width: 150,
+      width: 200,
       key: 'operation',
       render: (item) => {
         return (
           <>
-            <span className={cx('btn', 'primary-color')} onClick={() => this.handleModalStat('courseDetail', item)}>
+            <Button className={cx('min-padding')} type='link' onClick={() => props.showDetail('courseDetail', item.id)}>
               查看
-            </span>
-            <ConfirmComponent />
+            </Button>
+            {item.courseAuditState === 6 ? (
+              <Button className={cx('min-padding')} type='link' onClick={() => props.showDetail('newCourse', item.id)}>
+                编辑
+              </Button>
+            ) : null}
+
+            <ConfirmComponent onConfirm={() => props.onStateChange(item.id)} courseAuditState={item.courseAuditState} />
           </>
         )
       },
