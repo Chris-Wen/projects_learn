@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 
 export default class RecordTabComponent extends Component {
   static propTypes = {
-    prop: PropTypes,
+    deailt: PropTypes.any,
   }
 
   static defaultProps = {}

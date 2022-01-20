@@ -1,44 +1,23 @@
 import React, { Component } from 'react'
-import { Table } from 'antd'
+import PropTypes from 'prop-types'
+import { Table, Modal, Form, Button, Input, message, Popconfirm } from 'antd'
+import ImageUploader from '@/components/ImageUploader'
+import Image from '@/components/Image'
+import { getStudentList, payment, refund, deleteStudent } from '@/apis/classM'
+import { resJudge } from '@/utils/global'
+import { priceReg } from '@/utils/reg'
+
 import styles from '@/styles/global.module.css'
 import classNames from 'classnames/bind'
-
 let cx = classNames.bind(styles)
 
 export default class ListTabComponent extends Component {
   state = {
-    dataSource: [
-      {
-        id: 123,
-        name: '灰蒙蒙',
-        phone: 18899999999,
-        nickname: '我觉得哈哈动画动画哈哈动画',
-        status: 0,
-        money: 1000,
-        idNo: 123333333,
-      },
-      {
-        id: 12123,
-        name: '1灰蒙蒙',
-        phone: 18899999999,
-        nickname: '我觉得哈哈动画',
-        status: 1,
-        money: 900,
-        idNo: 12933333,
-      },
-      {
-        id: 3,
-        name: '1灰蒙蒙',
-        phone: 18899999999,
-        nickname: '我觉得哈哈动画',
-        status: 2,
-        money: 100,
-        idNo: 1333,
-      },
-    ],
+    dataSource: [],
     loading: false,
+    needReturnRefresh: false,
   }
-
+  modalRef = React.createRef()
   columns = [
     {
       align: 'center',
@@ -50,11 +29,11 @@ export default class ListTabComponent extends Component {
     {
       align: 'center',
       title: '学员信息',
-      dataIndex: 'name',
+      dataIndex: 'studentName',
       render: (text, record) => (
         <>
           <div style={{ color: '#000' }}>{text || ''}</div>
-          <div>联系方式：{record.phone || ''}</div>
+          <div>联系方式：{record.studentMobile || ''}</div>
         </>
       ),
     },
@@ -68,64 +47,227 @@ export default class ListTabComponent extends Component {
     {
       align: 'center',
       title: '缴费状态',
-      key: 'stat',
+      key: 'payStatus',
       render: (item) => <StatusText {...item} />,
     },
     {
       align: 'center',
       title: '操作',
-      dataIndex: 'status',
+      dataIndex: 'paymentStatus',
       render: (stat, item) => (
         <>
-          {stat === 0 ? (
+          {!stat ? (
             <>
-              <span className={cx('btn', 'primary-color')}>缴费</span> |
-              <span className={cx('btn', 'danger-color')}>删除</span>
+              <span className={cx('btn', 'primary-color')} onClick={() => this.handleStat(item, 'pay')}>
+                缴费
+              </span>{' '}
+              |
+              <Popconfirm
+                placement='left'
+                title={
+                  <span>
+                    删除学员后，该学员将被默认
+                    <span style={{ color: 'red' }}>取消预约</span>
+                    <br />
+                    本课程，该操作无法撤回，是否继续？
+                  </span>
+                }
+                onConfirm={() => this.handleDelete(item.registrationId)}
+                okText='继续'
+                cancelText='取消'
+              >
+                <span className={cx('btn', 'danger-color')}>删除</span>
+              </Popconfirm>
             </>
-          ) : stat === 1 ? (
-            <span className={cx('btn', 'danger-color')}>退款</span>
+          ) : !item.refundStatus ? (
+            <span className={cx('btn', 'danger-color')} onClick={() => this.handleStat(item, 'refund')}>
+              退款
+            </span>
           ) : (
-            <span className={cx('btn', 'primary-color')}>查看退款详情</span>
+            <span className={cx('btn', 'primary-color')} onClick={() => this.handleStat(item, 'info')}>
+              查看退款详情
+            </span>
           )}
         </>
       ),
     },
   ]
 
+  componentDidMount() {
+    this.getData()
+  }
+
+  getData = async () => {
+    if (this.props.id) {
+      this.setState({ loading: true })
+      let r = await getStudentList(this.props.id)
+      resJudge(r) && this.setState({ dataSource: r.data, loading: false })
+    }
+  }
+
+  handleStat = (data, type) => {
+    if (type === 'info') {
+      Modal.info({
+        title: '退款详情',
+        content: (
+          <>
+            <p>学员姓名：{data?.studentName}</p>
+            <p>缴费金额: {data?.paymentPrice}元</p>
+            <p>退款金额: {data?.refundPrice}元</p>
+            <p>
+              退款凭证: <Image src={data?.refundVoucher} style={{ width: 100, maxHeight: 150 }} />{' '}
+            </p>
+          </>
+        ),
+      })
+    } else {
+      this.modalRef.current.init(type, data)
+    }
+  }
+
+  handleDelete = async (id) => {
+    let r = await deleteStudent(id)
+    if (resJudge(r)) {
+      message.success('删除成功')
+      this.setState({ needReturnRefresh: true })
+      this.getData()
+    }
+  }
+
   render() {
     let { state: t } = this
     return (
-      <div>
+      <>
         <Table
           pagination={false}
           columns={this.columns}
-          rowKey='id'
+          rowKey='registrationId'
           dataSource={t.dataSource}
           loading={t.loading}
         ></Table>
-      </div>
+        <WrapDialog ref={this.modalRef} callback={this.getData} />
+      </>
     )
   }
 }
 
-function StatusText(props) {
-  switch (props.status) {
-    case 0:
-      return <span className={cx('primary-color')}>未缴费</span>
-    case 1:
+let StatusText = (props) => {
+  if (props?.paymentStatus) {
+    if (props?.refundStatus) {
       return (
         <>
-          已缴费<br></br> 收据单号：{props.idNo || ''}
+          已退款<br></br>退款金额： {props?.refundPrice}
         </>
       )
-    case 2:
+    } else {
       return (
         <>
-          已退款<br></br>退款金额： {props.money || ''}
+          已缴费<br></br> 收据单号：{props?.paymentReceiptNo}
         </>
       )
-    default:
-      break
+    }
+  } else {
+    return <span className={cx('primary-color')}>未缴费</span>
   }
-  return <></>
+}
+
+//弹窗
+class WrapDialog extends Component {
+  state = {
+    visible: false,
+    data: {},
+    type: null,
+    title: '',
+  }
+
+  init = (type, data = {}) =>
+    this.setState({ visible: true, data, type, title: type === 'pay' ? '学员缴费' : '退款窗口' })
+
+  onCancel = () => this.setState({ visible: false })
+  handleSubmit = async (val = {}) => {
+    let params = {
+      registrationId: this.state.data.registrationId,
+      ...val,
+    }
+    let r = await (this.state.type === 'pay' ? payment(params) : refund(params))
+    if (resJudge(r)) {
+      message.success('操作成功')
+      setTimeout(() => {
+        this.onCancel()
+        this.props?.callback()
+      }, 1000)
+    }
+  }
+
+  render() {
+    let { visible, title, data, type } = this.state
+
+    return (
+      <Modal visible={visible} title={title} footer={null} onCancel={this.onCancel}>
+        <FormContent handleSubmit={this.handleSubmit} onCancel={this.onCancel} data={data} type={type} />
+      </Modal>
+    )
+  }
+}
+
+let FormContent = Form.create({})((props) => {
+  const formItemLayout = { labelCol: { span: 8 }, wrapperCol: { span: 14 } }
+  let {
+    data,
+    type,
+    form: { getFieldDecorator },
+  } = props
+
+  let handleSubmit = () => {
+    props.form.validateFields((err, values) => !err && props?.handleSubmit(values))
+  }
+
+  return (
+    <Form {...formItemLayout}>
+      <Form.Item label='学员姓名'>{data?.studentName}</Form.Item>
+      <Form.Item label='缴费金额'>{data?.paymentPrice}元</Form.Item>
+      {!type ? null : type === 'pay' ? (
+        <Form.Item label='请输入收据号'>
+          {getFieldDecorator('paymentReceiptNo', {
+            rules: [{ required: true, message: '请输入收据号' }],
+          })(<Input placeholder='请输入收据号' allowClear />)}
+        </Form.Item>
+      ) : (
+        <>
+          <Form.Item label='退款金额'>
+            {getFieldDecorator('refundPrice', {
+              rules: [
+                { required: true, message: '请输入退款金额' },
+                { pattern: priceReg, message: '请输入正确金额' },
+              ],
+            })(<Input.Number placeholder='请输入退款金额' min={0} allowClear />)}
+          </Form.Item>
+          <Form.Item label='退款凭证'>
+            {getFieldDecorator('refundVoucher', {
+              rules: [{ required: true, message: '请上传退款凭证图片' }],
+            })(<ImageUploader tips='请上传退款截图，仅限1张，要求图片格式为jpg、png的格式' accept='.png,.jpeg,.jpg' />)}
+          </Form.Item>
+        </>
+      )}
+      <Form.Item>
+        <div style={{ float: 'right' }}>
+          <div>
+            <Button type='info' onClick={props.onCancel}>
+              取消
+            </Button>
+            &nbsp;&nbsp;
+            <Button type='primary' onClick={handleSubmit}>
+              确定
+            </Button>
+          </div>
+        </div>
+      </Form.Item>
+    </Form>
+  )
+})
+
+FormContent.propTypes = {
+  onCancel: PropTypes.func.isRequired,
+  data: PropTypes.object.isRequired,
+  type: PropTypes.string,
 }

@@ -23,8 +23,11 @@ export default class ClassManage extends Component {
 
   classStat = [
     { value: 'NOT_CLASS', name: '未开班' },
+    { value: 'CAN_REGISTRATION', name: '可报名' },
     { value: 'IN_CLASS', name: '上课中' },
     { value: 'END_CLASS', name: '已结课' },
+    { value: 'REGISTRATION_FULL', name: '报名人数已满' },
+    { value: 'REGISTRATION_DEADLINE', name: '报名截止' },
   ]
   modalRef = React.createRef()
 
@@ -49,8 +52,8 @@ export default class ClassManage extends Component {
       title: '班级人数',
       width: 120,
       key: 'num',
-      render: ({ currentNumber, fullNumber }) => (
-        <Button type='link' onClick={this.handleJump}>
+      render: ({ currentNumber, fullNumber, id }) => (
+        <Button type='link' onClick={() => this.handleModalStat('classDetail', { id, tabIndex: '2' })}>
           {currentNumber}/{fullNumber}
         </Button>
       ),
@@ -75,11 +78,14 @@ export default class ClassManage extends Component {
       render: (item) => {
         return (
           <>
-            <Button type='link' onClick={() => this.handleModalStat('classDetail', item)}>
+            <Button
+              type='link'
+              onClick={() => this.handleModalStat('classDetail', { id: item.id, status: item.status })}
+            >
               查看
             </Button>
-            {item.status > 0.3 ? (
-              <Button type='link' onClick={() => this.handleModalStat('classDetail', { ...item, tabIndex: '3' })}>
+            {item.canSign ? (
+              <Button type='link' onClick={() => this.handleModalStat('classDetail', { id: item.id, tabIndex: '3' })}>
                 签到
               </Button>
             ) : null}

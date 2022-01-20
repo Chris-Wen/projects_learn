@@ -4,8 +4,8 @@ import { Form, Input, InputNumber, Radio, DatePicker, Select, Button, TimePicker
 import moment from 'moment'
 import 'moment/locale/zh-cn'
 import { zywReg20, integerReg } from '@/utils/reg'
-import { resJudge } from '@/utils/global'
-import * as API from '@/apis/classM'
+import { resJudge, WEEKOPTIONS } from '@/utils/global'
+import { getCourseList, getClassRoomList, updateClass, addClass } from '@/apis/classM'
 
 moment.locale('zh-cn')
 class NewClass extends Component {
@@ -42,19 +42,47 @@ class NewClass extends Component {
   }
 
   classTimeValidator = (_, obj, callback) => {
-    console.log(obj)
     if (obj?.some((item) => !item.week || !item.startTime || !item.endTime || item.startTime >= item.endTime)) {
-      window.moment = moment
       callback('请完善时间排期内容, 且结束时间必须大于开始时间')
-    } else if (obj.length > 1) {
+    } else if (obj && obj.length > 1) {
       let weekArr = new Set()
       obj?.forEach((item) => item.week && weekArr.add(item.week))
-      weekArr.size !== obj.length && callback('请检查时间排期，每天只能安排一节课')
-    }
+      weekArr.size !== obj.length ? callback('请检查时间排期，每天只能安排一节课') : callback()
+      weekArr = null
+    } else callback()
+  }
+  signTimeValidator = (_, values, callback) => {
+    if (values && values.length === 2) {
+      let endTime = values[1]
+      let startTime = this.props.form.getFieldValue('openClassTime')
+      if (endTime && startTime) {
+        try {
+          endTime.format('YYYY-MM-DD') >= startTime.format('YYYY-MM-DD')
+            ? callback('报名截止日期必须小于开课日期')
+            : callback()
+        } catch (error) {
+          callback()
+        }
+      } else callback()
+    } else callback()
+  }
+  classStartValidator = (_, values, callback) => {
+    if (values) {
+      let rangeTime = this.props.form.getFieldValue('rangeTime')
+      if (rangeTime && rangeTime[1] && rangeTime.length === 2) {
+        try {
+          rangeTime[1].format('YYYY-MM-DD') >= values.format('YYYY-MM-DD')
+            ? callback('开课日期必须大于报名截止日期')
+            : callback()
+        } catch (error) {
+          callback()
+        }
+      } else callback()
+    } else callback()
   }
 
   componentDidMount() {
-    Promise.all([API.getCourseList(), API.getClassRoomList()]).then((r) => {
+    Promise.all([getCourseList(), getClassRoomList()]).then((r) => {
       if (resJudge(r[0]) && resJudge(r[1])) {
         this.setState({
           courseOptions: r[0].data,
@@ -74,14 +102,15 @@ class NewClass extends Component {
         params.registrationEndTime = rangeTime[1].format('YYYY-MM-DD')
         params.openClassTime = openClassTime.format('YYYY-MM-DD')
         params.classRoom = JSON.parse(classRoom)
+        let isAdd = !!this.props?.dataSource?.id
+        isAdd && (params.id = this.props?.dataSource?.id)
 
-        console.log(params)
-        let r = await API.addClass(params)
+        let r = await (this.props?.dataSource?.id ? updateClass(params) : addClass(params))
         if (resJudge(r)) {
-          message.success('新增成功')
+          message.success('操作成功')
 
           setTimeout(() => {
-            this.props?.onCancel()
+            this.props?.hideModal()
             this.props?.refresh()
           }, 1000)
         }
@@ -96,11 +125,18 @@ class NewClass extends Component {
       labelCol: { span: 4 },
       wrapperCol: { span: 16 },
     }
+    let { dataSource: p } = this.props
+    let rangeTime =
+      p && p?.registrationStartTime && p?.registrationEndTime
+        ? [moment(p?.registrationStartTime, 'YYYY-MM-DD'), moment(p?.registrationEndTime, 'YYYY-MM-DD')]
+        : null
+
     return (
       <Form {...formLayout} onSubmit={this.handleSubmit}>
         <Form.Item label='关联课程'>
           {getFieldDecorator('courseId', {
             rules: [{ required: true, message: '请选择课程' }],
+            initialValue: p?.courseId,
           })(
             <Select
               showSearch
@@ -123,21 +159,25 @@ class NewClass extends Component {
               { required: true, message: '请输入班级名称,同一课程班级名称不能重复' },
               { pattern: zywReg20, message: '支持中英文数字，限20字符' },
             ],
-          })(<Input placeholder='请输入班级名称,同一课程班级名称不能重复' style={{ maxWidth: 300 }} />)}
+            initialValue: p?.name,
+          })(<Input placeholder='请输入班级名称,同一课程班级名称不能重复' style={{ maxWidth: 300 }} allowClear />)}
         </Form.Item>
         <Form.Item label='报名日期'>
           {getFieldDecorator('rangeTime', {
-            rules: [{ required: true, message: '请选择报名日期' }],
+            rules: [{ required: true, message: '请选择报名日期' }, { validator: this.signTimeValidator }],
+            initialValue: rangeTime,
           })(<DatePicker.RangePicker disabledDate={this.disabledDate} format='YYYY-MM-DD' />)}
         </Form.Item>
         <Form.Item label='开课日期'>
           {getFieldDecorator('openClassTime', {
-            rules: [{ required: true, message: '请选择开课日期' }],
+            rules: [{ required: true, message: '请选择开课日期' }, { validator: this.classStartValidator }],
+            initialValue: p?.openClassTime ? moment(p.openClassTime, 'YYYY-MM-DD') : null,
           })(<DatePicker format='YYYY-MM-DD' />)}
         </Form.Item>
         <Form.Item label='班级教室'>
           {getFieldDecorator('classRoom', {
-            rules: [{ required: true, message: '请选择课程' }],
+            rules: [{ required: true, message: '请选择教室' }],
+            initialValue: JSON.stringify(p?.classRoom),
           })(
             <Select
               showSearch
@@ -161,18 +201,20 @@ class NewClass extends Component {
               { required: true, type: 'number', message: '请输入班级人数上限' },
               { pattern: integerReg, message: '请输入正整数' },
             ],
+            initialValue: p?.fullNumber,
           })(<InputNumber placeholder='请输入' min={1} max={50} />)}
           人
         </Form.Item>
         <Form.Item label='老师微信'>
           {getFieldDecorator('wechat', {
             rules: [{ required: true, message: '请填写老师微信' }],
+            initialValue: p?.wechat,
           })(<Input placeholder='请输入微信号，方便学生添加老师微信' style={{ maxWidth: 300 }} allowClear />)}
         </Form.Item>
         <Form.Item label='签到方式'>
           {getFieldDecorator('signType', {
             rules: [{ required: true, message: '请选择签到方式' }],
-            initialValue: 1,
+            initialValue: p?.signType || 1,
           })(
             <Radio.Group>
               <Radio value={1}>扫码机签到</Radio>
@@ -186,6 +228,7 @@ class NewClass extends Component {
               { required: true, type: 'array', min: 1, message: '请填写上课排期' },
               { validator: this.classTimeValidator },
             ],
+            initialValue: p?.classTimeList,
           })(<ClassTimeGroup />)}
         </Form.Item>
         <Form.Item>
@@ -193,7 +236,7 @@ class NewClass extends Component {
             <Button type='primary' htmlType='submit'>
               确定
             </Button>
-            <Button onClick={this.props.onCancel} style={{ marginLeft: '20px' }}>
+            <Button onClick={this.props.hideModal} style={{ marginLeft: '20px' }}>
               取消
             </Button>
           </div>
@@ -214,15 +257,7 @@ class ClassTimeGroup extends Component {
     let timeGroup = props.value || [{ week: null, startTime: null, endTime: null }]
     this.state = {
       timeGroup,
-      options: [
-        { text: '周一', value: 1 },
-        { text: '周二', value: 2 },
-        { text: '周三', value: 3 },
-        { text: '周四', value: 4 },
-        { text: '周五', value: 5 },
-        { text: '周六', value: 6 },
-        { text: '周日', value: 7 },
-      ],
+      options: WEEKOPTIONS,
     }
   }
 
@@ -271,6 +306,7 @@ class ClassTimeGroup extends Component {
                 style={{ width: 100, marginRight: 20 }}
                 filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                 onChange={(...arg) => this.handleChange(i, 'week', ...arg)}
+                defaultValue={item.week}
                 allowClear
               >
                 {options.map((obj) => (
