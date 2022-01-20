@@ -1,10 +1,12 @@
 import React, { Component } from 'react'
-import { Button, Table, Modal, Form, Input, Popconfirm } from 'antd'
+import { Button, Table, Modal, Form, Input, Popconfirm, message } from 'antd'
 import Image from '@/components/Image'
+import ImageUploader from '@/components/ImageUploader'
+import * as API from '@/apis/operate'
+import { resJudge } from '@/utils/global'
+
 import styles from '@/styles/global.module.css'
 import classNames from 'classnames/bind'
-import ImageUploader from '@/components/ImageUploader'
-
 let cx = classNames.bind(styles)
 
 export default class OperationManage extends Component {
@@ -13,14 +15,12 @@ export default class OperationManage extends Component {
     btnLoading: false,
     isAddAction: false,
     loading: true,
-    editData: { pic: '', link: '' },
+    editData: { imageUrl: '', jumpUrl: '' },
     dataSource: [],
     pagination: {
       total: 0,
       current: 1,
-      pageSize: 10,
-      showSizeChanger: true,
-      showTotal: (total) => `共${total}条数据`,
+      size: 10,
     },
   }
 
@@ -29,21 +29,20 @@ export default class OperationManage extends Component {
     {
       align: 'center',
       title: '运营位链接',
-      dataIndex: 'link',
+      dataIndex: 'jumpUrl',
       className: cx('td-max-width'),
       ellipsis: true,
     },
     {
       align: 'center',
       title: '运营位图片',
-      key: 'pic',
-      dataIndex: 'pic',
-      render: (pic) => <Image style={{ width: '130px', maxHeight: '80px' }} src={pic} />,
+      dataIndex: 'imageUrl',
+      render: (imageUrl) => <Image style={{ width: '130px', maxHeight: '80px' }} src={imageUrl} />,
     },
     {
       align: 'center',
       title: '被点击数',
-      dataIndex: 'pv',
+      dataIndex: 'hitsCount',
     },
     {
       align: 'center',
@@ -60,38 +59,29 @@ export default class OperationManage extends Component {
       key: 'operation',
       render: (item) => {
         return item.status ? (
-          <Popconfirm
-            placement='left'
-            onConfirm={() => this.handleRowData(item, 'state')}
-            okText='确定'
-            cancelText='取消'
-            title='确认下架？'
-          >
-            <span className={cx('btn', 'primary-color')}>下架</span>
-          </Popconfirm>
+          <PopoverButton
+            onConfirm={() => this.handleRowData(item.id, 'state')}
+            content='确认下架？'
+            btnText='下架'
+            styleClass={cx('btn', 'primary-color')}
+          />
         ) : (
           <>
             <span className={cx('btn', 'primary-color')} onClick={() => this.handleRowData(item, 'edit')}>
               编辑
             </span>
-            <Popconfirm
-              placement='left'
-              onConfirm={() => this.handleRowData(item, 'state')}
-              okText='确定'
-              cancelText='取消'
-              title='确认下架？'
-            >
-              <span className={cx('btn', 'primary-color')}>上架</span>
-            </Popconfirm>
-            <Popconfirm
-              placement='left'
-              onConfirm={() => this.handleRowData(item, 'delete')}
-              okText='确定'
-              cancelText='取消'
-              title='确认删除？'
-            >
-              <span className={cx('btn', 'danger-color')}>删除</span>
-            </Popconfirm>
+            <PopoverButton
+              onConfirm={() => this.handleRowData(item.id, 'state')}
+              content='确认上架？'
+              btnText='上架'
+              styleClass={cx('btn', 'primary-color')}
+            />
+            <PopoverButton
+              onConfirm={() => this.handleRowData(item.id, 'delete')}
+              content='确认删除？'
+              btnText='删除'
+              styleClass={cx('btn', 'danger-color')}
+            />
           </>
         )
       },
@@ -102,46 +92,33 @@ export default class OperationManage extends Component {
     this.getData()
   }
 
-  onPageChange = (current, pageSize) => {
-    this.getData({ current, pageSize })
+  onPageChange = (current, size) => {
+    this.getData({ current, size })
   }
-  onSizeChange = (current, pageSize) => {
+  onSizeChange = (current, size) => {
     this.getData({
       current: 1,
-      pageSize,
+      size,
     })
   }
 
-  getData = (params = {}) => {
+  getData = async (params = {}) => {
     this.setState({ loading: true })
-    let { current, pageSize } = { ...this.state.pagination, ...params }
-    params = { current, pageSize }
+    let { current, size } = { ...this.state.pagination, ...params }
+    params = { current, size }
     let dataSource = []
-    setTimeout(() => {
-      for (let i = 0; i < pageSize; i++) {
-        dataSource.push({
-          key: i,
-          id: `${(Math.random() * 1000).toFixed(0)}`,
-          pv: `${(Math.random() * 1000).toFixed(0)}`,
-          link: 'https://lanhuapp.com/web/#/item/project/product?tid=390df24f-b6b5-4b13-bcfe-0185b2f702ee&pid=db2721aa-ce2e-4ed0-8097-c1395c124d3a&versionId=0a5429d5-b656-4e11-8183-5c27432b908d&docId=ddc2c78c-10ad-43b6-9a7d-714b60c62280&docType=axure&pageId=0ce57a633bb046619e9fbbad8362a9ad&image_id=ddc2c78c-10ad-43b6-9a7d-714b60c62280&parentId=b0b1862e-a04a-4dd1-b1dd-b3345fe7c4e4',
-          pic: 'https://pic1.zhimg.com/v2-9a15080f9425446e294eedb7a7a15ad6_1440w.jpg?source=172ae18b',
-          status: Math.random() > 0.5,
-        })
-      }
-      var total = Math.ceil(Math.random() * 100)
-      this.setState(({ pagination }) => {
-        return {
-          loading: false,
-          dataSource,
-          pagination: {
-            ...pagination,
-            current,
-            pageSize,
-            total,
-          },
-        }
-      })
-    }, 1000)
+    let total = 0
+    let r = await API.getBannerList(params)
+    if (resJudge(r)) {
+      dataSource = r.data.records
+      total = r.data.total
+    }
+
+    this.setState({
+      loading: false,
+      dataSource,
+      pagination: { current, size, total },
+    })
   }
 
   /**
@@ -149,15 +126,12 @@ export default class OperationManage extends Component {
    * @param {Boolean} isAdd
    * @param {Object} editData
    */
-  handleModalStat = (isAdd, editData = { name: '', link: '' }) => {
-    this.setState(({ visible }) => {
-      var params = {
-        visible: !visible,
-        editData,
-      }
-      if (!visible) params.isAddAction = isAdd === true
-      return params
-    })
+  handleModalStat = (editData = { imageUrl: '', jumpUrl: '' }) => {
+    this.setState(({ visible }) => ({
+      visible: !visible,
+      isAddAction: !editData.id,
+      editData,
+    }))
   }
 
   /**
@@ -165,35 +139,39 @@ export default class OperationManage extends Component {
    * @param {Obj} data
    * @param {String} type : 操作类型
    */
-  handleRowData(data, type) {
+  handleRowData = async (data, type) => {
     if (type === 'edit') {
-      this.handleModalStat(false, data)
-    } else if (type === 'delete') {
-      this.getData()
+      this.handleModalStat(data)
     } else {
-      this.getData({ current: 1 })
+      let r = await (type === 'delete' ? API.deleteBData(data) : API.changeBStat(data))
+      if (resJudge(r)) {
+        message.success('操作成功')
+        this.getData()
+      }
     }
   }
 
   handleChildEvent = (ref) => (this.childRefForm = ref)
 
   onSubmit = () => {
-    console.log(this.childRefForm)
-    this.childRefForm.validateFields((err, values) => {
+    this.childRefForm.validateFields(async (err, values) => {
       if (!err) {
         this.setState({ btnLoading: true })
-        // let params = {
-        //   ...this.state.editData,
-        //   ...values,
-        // }
+        let params = {
+          ...this.state.editData,
+          ...values,
+        }
+        let r = await (params.id ? API.updateBData(params) : API.addBData(params))
+        resJudge(r) && message.success(params.id ? '更新成功' : '新增成功')
 
         setTimeout(() => {
+          this.getData()
           this.setState({
             btnLoading: false,
             visible: false,
-            editData: { pic: '', link: '' },
+            editData: { imageUrl: '', jumpUrl: '' },
           })
-        }, 3000)
+        }, 1000)
       }
     })
   }
@@ -203,18 +181,21 @@ export default class OperationManage extends Component {
 
     return (
       <div className='page-tb'>
-        <Button type='primary' icon='plus' onClick={() => this.handleModalStat(true)} style={{ marginBottom: 16 }}>
+        <Button type='primary' icon='plus' onClick={() => this.handleModalStat()} style={{ marginBottom: 16 }}>
           新建
         </Button>
         <Table
           pagination={{
             ...t.pagination,
+            showSizeChanger: true,
+            showTotal: (total) => `共${total}条数据`,
             onShowSizeChange: this.onSizeChange,
             onChange: this.onPageChange,
           }}
           columns={this.columns}
           dataSource={t.dataSource}
           loading={t.loading}
+          rowKey='id'
         ></Table>
         <Modal
           visible={t.visible}
@@ -232,13 +213,21 @@ export default class OperationManage extends Component {
   }
 }
 
+const PopoverButton = (props) => {
+  return (
+    <Popconfirm placement='left' onConfirm={props.onConfirm} okText='确定' cancelText='取消' title={props.content}>
+      <span className={props.styleClass}>{props.btnText}</span>
+    </Popconfirm>
+  )
+}
+
 OperationManage.RouterName = '运营位管理'
 
 const ModalFormCreate = Form.create({
   mapPropsToFields(props) {
     return {
-      pic: Form.createFormField({ value: props.pic }),
-      link: Form.createFormField({ value: props.link }),
+      imageUrl: Form.createFormField({ value: props.imageUrl }),
+      jumpUrl: Form.createFormField({ value: props.jumpUrl }),
     }
   },
 })(
@@ -261,10 +250,10 @@ const ModalFormCreate = Form.create({
       return (
         <Form>
           <Form.Item label='上传图片' {...formItemLayout}>
-            {getFieldDecorator('pic', nameOptions)(<ImageUploader />)}
+            {getFieldDecorator('imageUrl', nameOptions)(<ImageUploader />)}
           </Form.Item>
           <Form.Item label='跳转链接' {...formItemLayout}>
-            {getFieldDecorator('link', linkOptions)(<Input placeholder='请输入' allowClear />)}
+            {getFieldDecorator('jumpUrl', linkOptions)(<Input placeholder='请输入' allowClear />)}
           </Form.Item>
         </Form>
       )

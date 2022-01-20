@@ -1,5 +1,7 @@
 import React, { Component } from 'react'
-import { Button, Table, Modal, Form, Input } from 'antd'
+import { Button, Table, Modal, Form, Input, message } from 'antd'
+import { getAppletsList, updateAppletsData } from '@/apis/applets'
+import { resJudge } from '@/utils/global'
 
 /**
  * 小程序管理页面
@@ -13,6 +15,7 @@ export default class AppletsManage extends Component {
     loading: true,
     editData: { name: '', appid: '' },
     dataSource: [],
+    pagination: { current: 1, size: 10, total: 0 },
   }
 
   // table columns config
@@ -20,12 +23,12 @@ export default class AppletsManage extends Component {
     {
       align: 'center',
       title: '社区ID',
-      dataIndex: 'id',
+      dataIndex: 'platformCommunityId',
     },
     {
       align: 'center',
       title: '社区名称',
-      dataIndex: 'name',
+      dataIndex: 'communityName',
     },
     {
       align: 'center',
@@ -39,7 +42,7 @@ export default class AppletsManage extends Component {
       key: 'operation',
       fixed: 'right',
       render: (item) => (
-        <Button type='link' onClick={() => this.handleModalStat(false, item)}>
+        <Button type='link' onClick={() => this.handleModalStat(item)}>
           编辑
         </Button>
       ),
@@ -50,20 +53,28 @@ export default class AppletsManage extends Component {
     this.getData()
   }
 
-  getData() {
+  onPageChange = (current, size) => {
+    this.getData({ current, size })
+  }
+  onSizeChange = (current, size) => {
+    this.getData({
+      current: 1,
+      size,
+    })
+  }
+
+  getData = async (params = {}) => {
     this.setState({ loading: true })
+    let { current, size } = { ...this.state.pagination, ...params }
+    params = { current, size }
     let dataSource = []
-    setTimeout(() => {
-      for (let i = 0; i < 32; i++) {
-        dataSource.push({
-          key: i,
-          id: 123,
-          name: `未来社区${Math.random().toFixed(3)}`,
-          appid: 'xxadkd1cxxxx',
-        })
-      }
-      this.setState({ loading: false, dataSource })
-    }, 1000)
+    let total = 0
+    let r = await getAppletsList()
+    if (resJudge(r)) {
+      dataSource = r.data.records
+      total = r.data.total
+    }
+    this.setState({ loading: false, dataSource, pagination: { current, size, total } })
   }
 
   /**
@@ -71,33 +82,32 @@ export default class AppletsManage extends Component {
    * @param {Boolean} isAdd
    * @param {Object} editData
    */
-  handleModalStat = (isAdd, editData = { name: '', appid: '' }) => {
-    this.setState(({ visible }) => {
-      var params = {
-        visible: !visible,
-        editData,
-      }
-      if (!visible) params.isAddAction = isAdd === true
-      return params
-    })
+  handleModalStat = (editData) => {
+    this.setState(({ visible }) => ({
+      visible: !visible,
+      editData,
+    }))
   }
 
   onSubmit = () => {
-    this.childRefForm.validateFields((err, values) => {
+    this.childRefForm.validateFields(async (err, values) => {
       if (!err) {
         this.setState({ btnLoading: true })
-        // let params = {
-        //   ...this.state.editData,
-        //   ...values,
-        // }
+        let params = {
+          ...this.state.editData,
+          ...values,
+        }
+        let r = await updateAppletsData(params)
+        resJudge(r) && message.success('更新成功')
 
         setTimeout(() => {
+          this.getData()
           this.setState({
             btnLoading: false,
             visible: false,
-            editData: { name: '', appid: '' },
+            editData: {},
           })
-        }, 3000)
+        }, 1000)
       }
     })
   }
@@ -107,16 +117,25 @@ export default class AppletsManage extends Component {
 
     return (
       <div className='page-tb'>
-        <Button type='primary' icon='plus' onClick={() => this.handleModalStat(true)} style={{ marginBottom: 16 }}>
-          新建
-        </Button>
-        <Table columns={this.columns} dataSource={t.dataSource} loading={t.loading}></Table>
+        <Table
+          pagination={{
+            ...t.pagination,
+            showSizeChanger: true,
+            showTotal: (total) => `共${total}条数据`,
+            onShowSizeChange: this.onSizeChange,
+            onChange: this.onPageChange,
+          }}
+          rowKey='platformCommunityId'
+          columns={this.columns}
+          dataSource={t.dataSource}
+          loading={t.loading}
+        />
         <Modal
           visible={t.visible}
-          title={t.isAddAction ? '新建' : '编辑'}
+          title='编辑'
           onCancel={this.handleModalStat}
           onOk={this.onSubmit}
-          okText={t.isAddAction ? '新建' : '修改'}
+          okText='修改'
           cancelText='取消'
           confirmLoading={t.btnLoading}
         >
@@ -132,7 +151,7 @@ AppletsManage.RouterName = '小程序管理'
 const ModalFormCreate = Form.create({
   mapPropsToFields(props) {
     return {
-      name: Form.createFormField({ value: props.name }),
+      name: Form.createFormField({ value: props.communityName }),
       appid: Form.createFormField({ value: props.appid }),
     }
   },
@@ -145,13 +164,7 @@ const ModalFormCreate = Form.create({
     render() {
       const formItemLayout = { labelCol: { span: 8 }, wrapperCol: { span: 14 } }
       const { getFieldDecorator } = this.props.form
-      const nameOptions = {
-        validateTrigger: 'onBlur',
-        rules: [
-          { required: true, whitespace: true, message: '请输入社区名称' },
-          { max: 15, message: '不超过15字' },
-        ],
-      }
+
       const appidOptions = {
         validateTrigger: 'onBlur',
         rules: [{ required: true, whitespace: true, message: '请输入小程序appid' }],
@@ -159,7 +172,7 @@ const ModalFormCreate = Form.create({
       return (
         <Form>
           <Form.Item label='社区名称' {...formItemLayout}>
-            {getFieldDecorator('name', nameOptions)(<Input placeholder='请输入社区名称' allowClear />)}
+            {getFieldDecorator('name')(<Input placeholder='请输入社区名称' allowClear disabled />)}
           </Form.Item>
           <Form.Item label='社区平台小程序appid' {...formItemLayout}>
             {getFieldDecorator('appid', appidOptions)(<Input placeholder='请输入小程序appid' allowClear />)}
