@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Table, Modal, Form, Button, Input, message, Popconfirm } from 'antd'
 import ImageUploader from '@/components/ImageUploader'
 import Image from '@/components/Image'
-import { getStudentList, payment, refund, deleteStudent } from '@/apis/classM'
+import { getStudentList, payment, refund, deleteStudent, cancelPayment } from '@/apis/classM'
 import { resJudge } from '@/utils/global'
 import { priceReg } from '@/utils/reg'
 
@@ -72,13 +72,29 @@ export default class ListTabComponent extends Component {
                     本课程，该操作无法撤回，是否继续？
                   </span>
                 }
-                onConfirm={() => this.handleDelete(item.registrationId)}
+                onConfirm={() => this.handleStat(item.registrationId, 'delete')}
                 okText='继续'
                 cancelText='取消'
               >
                 <span className={cx('btn', 'danger-color')}>删除</span>
               </Popconfirm>
             </>
+          ) : item.canCancelStatus ? (
+            <Popconfirm
+              placement='left'
+              title={
+                <span>
+                  取消缴费后，该学员将回到未缴费状态，
+                  <br />
+                  ，请核对仔细后继续！
+                </span>
+              }
+              onConfirm={() => this.handleStat(item.registrationId, 'cancel')}
+              okText='继续'
+              cancelText='取消'
+            >
+              <span className={cx('btn', 'danger-color')}>取消缴费</span>
+            </Popconfirm>
           ) : !item.refundStatus ? (
             <span className={cx('btn', 'danger-color')} onClick={() => this.handleStat(item, 'refund')}>
               退款
@@ -105,7 +121,8 @@ export default class ListTabComponent extends Component {
     }
   }
 
-  handleStat = (data, type) => {
+  //list数据修改相关方法
+  handleStat = async (data, type) => {
     if (type === 'info') {
       Modal.info({
         title: '退款详情',
@@ -120,17 +137,15 @@ export default class ListTabComponent extends Component {
           </>
         ),
       })
+    } else if (type === 'delete' || type === 'cancel') {
+      let r = await (type === 'delete' ? deleteStudent(data) : cancelPayment(data))
+      if (resJudge(r)) {
+        message.success('操作成功')
+        this.setState({ needReturnRefresh: true })
+        this.getData()
+      }
     } else {
       this.modalRef.current.init(type, data)
-    }
-  }
-
-  handleDelete = async (id) => {
-    let r = await deleteStudent(id)
-    if (resJudge(r)) {
-      message.success('删除成功')
-      this.setState({ needReturnRefresh: true })
-      this.getData()
     }
   }
 
@@ -144,6 +159,7 @@ export default class ListTabComponent extends Component {
           rowKey='registrationId'
           dataSource={t.dataSource}
           loading={t.loading}
+          scroll={{ y: '100vh' }}
         ></Table>
         <WrapDialog ref={this.modalRef} callback={this.getData} />
       </>

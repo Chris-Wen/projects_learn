@@ -32,7 +32,7 @@ const CourseDetail = (props) => {
           </span>
         ))}
       </Form.Item>
-      <Form.Item label='课程头图'>
+      <Form.Item label='课程LOGO'>
         <Image className={cx('image')} src={props?.courseLogo} />
       </Form.Item>
       <Form.Item label='课程头图'>

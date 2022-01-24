@@ -4,12 +4,16 @@ import PropTypes from 'prop-types'
 import ModalWrapComponent from '@/components/ModalWrapComponent'
 import * as API from '@/apis/classM'
 import { resJudge } from '@/utils/global'
+import { withRouter } from 'react-router-dom'
+import { connect } from 'react-redux'
+import { changeTokenAction } from '@/store/reducers'
+import qs from 'qs'
 
 import styles from '@/styles/global.module.css'
 import classNames from 'classnames/bind'
 let cx = classNames.bind(styles)
 
-export default class ClassManage extends Component {
+class ClassManage extends Component {
   state = {
     loading: false,
     dataSource: [],
@@ -52,8 +56,8 @@ export default class ClassManage extends Component {
       title: '班级人数',
       width: 120,
       key: 'num',
-      render: ({ currentNumber, fullNumber, id }) => (
-        <Button type='link' onClick={() => this.handleModalStat('classDetail', { id, tabIndex: '2' })}>
+      render: ({ currentNumber, fullNumber, id, status }) => (
+        <Button type='link' onClick={() => this.handleModalStat('classDetail', { id, status, tabIndex: '2' })}>
           {currentNumber}/{fullNumber}
         </Button>
       ),
@@ -73,7 +77,8 @@ export default class ClassManage extends Component {
     {
       align: 'left',
       title: '操作',
-      width: 150,
+      width: 160,
+      fixed: 'right',
       key: 'operation',
       render: (item) => {
         return (
@@ -85,7 +90,10 @@ export default class ClassManage extends Component {
               查看
             </Button>
             {item.canSign ? (
-              <Button type='link' onClick={() => this.handleModalStat('classDetail', { id: item.id, tabIndex: '3' })}>
+              <Button
+                type='link'
+                onClick={() => this.handleModalStat('classDetail', { id: item.id, status: item.status, tabIndex: '3' })}
+              >
                 签到
               </Button>
             ) : null}
@@ -96,6 +104,11 @@ export default class ClassManage extends Component {
   ]
 
   componentDidMount() {
+    let { search } = this.props.location
+    let { token } = qs.parse(search.slice(1))
+    if (!this.props.token || this.props.token !== token) {
+      token && this.props.changeTokenAction(token)
+    }
     this.getData()
   }
   onPageChange = (current, pageSize) => this.getData({ current, pageSize })
@@ -224,3 +237,5 @@ const SearchForm = Form.create({})(
     }
   },
 )
+
+export default connect(({ global: { token } }) => ({ token }), { changeTokenAction })(withRouter(ClassManage))

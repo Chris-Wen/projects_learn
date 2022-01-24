@@ -6,12 +6,12 @@ export async function getCourseLabel(subjectId, ageIds) {
 }
 //新增课程
 export async function addCourse(params) {
-  return await request.post('/manage/course/save', params, 'application/json')
+  return await request.post('/manage/course/save', params)
 }
 
 //修改课程
 export async function updateCourse(params) {
-  return await request.post('/manage/course/update', params, 'application/json')
+  return await request.post('/manage/course/update', params)
 }
 
 //获取课程列表

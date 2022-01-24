@@ -4,12 +4,16 @@ import Image from '@/components/Image'
 import ImageUploader from '@/components/ImageUploader'
 import * as API from '@/apis/operate'
 import { resJudge } from '@/utils/global'
+import { connect } from 'react-redux'
+import { withRouter } from 'react-router-dom'
+import { changeTokenAction } from '@/store/reducers'
+import qs from 'qs'
 
 import styles from '@/styles/global.module.css'
 import classNames from 'classnames/bind'
 let cx = classNames.bind(styles)
 
-export default class OperationManage extends Component {
+class OperationManage extends Component {
   state = {
     visible: false,
     btnLoading: false,
@@ -89,6 +93,11 @@ export default class OperationManage extends Component {
   ]
 
   componentDidMount() {
+    let { search } = this.props.location
+    let { token } = qs.parse(search.slice(1))
+    if (!this.props.token || this.props.token !== token) {
+      token && this.props.changeTokenAction(token)
+    }
     this.getData()
   }
 
@@ -260,3 +269,5 @@ const ModalFormCreate = Form.create({
     }
   },
 )
+
+export default connect(({ global: { token } }) => ({ token }), { changeTokenAction })(withRouter(OperationManage))

@@ -15,11 +15,11 @@ export async function getClassDetail(id) {
 }
 
 export async function addClass(params) {
-  return await request.post('/manage/class/save', params, 'application/json')
+  return await request.post('/manage/class/save', params)
 }
 
 export async function updateClass(params) {
-  return await request.post('/manage/class/update', params, 'application/json')
+  return await request.post('/manage/class/update', params)
 }
 
 export async function getCourseList() {
@@ -30,7 +30,7 @@ export async function getClassRoomList() {
   return await request.get('/manage/class/pageClassRoom', { current: 1, size: 1000 })
 }
 
-//签到相关
+//名单相关
 export async function getStudentList(classId) {
   return await request.get('/manage/class/classStudent/list', { classId })
 }
@@ -39,9 +39,31 @@ export async function deleteStudent(registrationId) {
   return await request.get('/manage/class/classStudent/delete', { registrationId })
 }
 
-export async function payment(params) {
-  return await request.post('/manage/class/classStudent/payment', params, 'application/json')
+export async function cancelPayment(registrationId) {
+  return await request.get('/manage/class/classStudent/cancelPayment', { registrationId })
 }
+
+export async function payment(params) {
+  return await request.post('/manage/class/classStudent/payment', params)
+}
+
 export async function refund(params) {
-  return await request.post('/manage/class/classStudent/refund', params, 'application/json')
+  return await request.post('/manage/class/classStudent/refund', params)
+}
+
+//签到相关接口
+export async function getSignList(classId) {
+  return await request.get('/manage/class/sign/list', { classId })
+}
+
+export async function getSingleList(params) {
+  return await request.get('/manage/class/sign/get', params)
+}
+
+export async function sign(params) {
+  return await request.post('/manage/class/sign/sign', params)
+}
+
+export async function updateSign(params) {
+  return await request.post('/manage/class/sign/updateSign', params)
 }

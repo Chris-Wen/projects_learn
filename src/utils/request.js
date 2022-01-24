@@ -89,7 +89,7 @@ const request = {
   post(url, params, type) {
     return service.post(url, params, {
       headers: {
-        'Content-Type': type || 'application/x-www-form-urlencoded',
+        'Content-Type': type || 'application/json',
       },
     })
   },

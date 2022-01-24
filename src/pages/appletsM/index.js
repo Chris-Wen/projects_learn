@@ -2,20 +2,27 @@ import React, { Component } from 'react'
 import { Button, Table, Modal, Form, Input, message } from 'antd'
 import { getAppletsList, updateAppletsData } from '@/apis/applets'
 import { resJudge } from '@/utils/global'
+import { withRouter } from 'react-router-dom'
+import { connect } from 'react-redux'
+import { changeTokenAction } from '@/store/reducers'
+import qs from 'qs'
 
 /**
  * 小程序管理页面
  * @returns Component
  */
-export default class AppletsManage extends Component {
-  state = {
-    visible: false,
-    btnLoading: false,
-    isAddAction: false,
-    loading: true,
-    editData: { name: '', appid: '' },
-    dataSource: [],
-    pagination: { current: 1, size: 10, total: 0 },
+class AppletsManage extends Component {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      btnLoading: false,
+      isAddAction: false,
+      loading: true,
+      editData: { name: '', appid: '' },
+      dataSource: [],
+      pagination: { current: 1, size: 10, total: 0 },
+    }
   }
 
   // table columns config
@@ -50,6 +57,12 @@ export default class AppletsManage extends Component {
   ]
 
   componentDidMount() {
+    if (!this.props.token) {
+      let { search } = this.props.location
+      let { token } = qs.parse(search.slice(1))
+      token && this.props.changeTokenAction(token)
+    }
+
     this.getData()
   }
 
@@ -182,3 +195,5 @@ const ModalFormCreate = Form.create({
     }
   },
 )
+
+export default withRouter(connect(({ global: { token } }) => ({ token }), { changeTokenAction })(AppletsManage))

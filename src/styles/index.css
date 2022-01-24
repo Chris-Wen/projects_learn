@@ -5,3 +5,9 @@
   padding: 24px;
   background: #fff;
 }
+.colored-bg {
+  background: #ecc16a !important;
+}
+.ant-btn-link {
+  padding: 5px !important;
+}

@@ -5,8 +5,11 @@ import ModalWrapComponent from '@/components/ModalWrapComponent'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { getCourseTypeAction } from '@/store/reducers/course/action'
+import { changeTokenAction } from '@/store/reducers'
 import { getCourseList, changeCourseStat, getCourseDetail } from '@/apis/course'
 import { resJudge } from '@/utils/global'
+import { withRouter } from 'react-router-dom'
+import qs from 'qs'
 
 class CourseManage extends Component {
   static propTypes = {
@@ -32,6 +35,11 @@ class CourseManage extends Component {
   modalRef = React.createRef()
 
   componentDidMount() {
+    let { search } = this.props.location
+    let { token } = qs.parse(search.slice(1))
+    if (!this.props.token || this.props.token !== token) {
+      token && this.props.changeTokenAction(token)
+    }
     this.getData()
     !this.props.courseType.length && this.props.getCourseTypeAction()
   }
@@ -206,4 +214,7 @@ const SearchForm = Form.create({})(
   },
 )
 
-export default connect(({ course: { courseType } }) => ({ courseType }), { getCourseTypeAction })(CourseManage)
+export default connect(({ course: { courseType }, global: { token } }) => ({ courseType, token }), {
+  getCourseTypeAction,
+  changeTokenAction,
+})(withRouter(CourseManage))
