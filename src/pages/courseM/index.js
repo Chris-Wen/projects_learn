@@ -24,7 +24,7 @@ class CourseManage extends Component {
     pagination: {
       total: 0,
       current: 1,
-      size: 10,
+      pageSize: 10,
     },
     activeTab: '0',
     courseState: [
@@ -43,9 +43,9 @@ class CourseManage extends Component {
     this.getData()
     !this.props.courseType.length && this.props.getCourseTypeAction()
   }
-  onPageChange = (current, size) => this.getData({ current, size })
+  onPageChange = ({ current, pageSize }) => this.getData({ current, pageSize })
 
-  onSizeChange = (current, size) => this.getData({ current: 1, size })
+  onSizeChange = (current, pagesize) => this.getData({ current: 1, pagesize })
 
   handleSearch = (params = {}) => {
     this.setState(({ searchParams }) => ({ searchParams: { ...searchParams, ...params } }))
@@ -61,7 +61,7 @@ class CourseManage extends Component {
 
   handleChangeTab = (activeTab) => {
     this.setState(() => ({ activeTab }))
-    this.getData({ courseType: parseInt(activeTab) })
+    this.getData({ courseType: parseInt(activeTab), current: 1 })
   }
 
   handleStat = async (id) => {
@@ -88,9 +88,11 @@ class CourseManage extends Component {
   getData = async (_params = {}) => {
     this.setState({ loading: true })
     let params = { ...this.state.pagination, ...this.state.searchParams, ..._params }
+    params.size = params.pageSize
     if (!params.courseType) params.courseType = undefined
     try {
       delete params.total
+      delete params.pageSize
     } catch (error) {}
 
     let dataSource = []
@@ -103,7 +105,7 @@ class CourseManage extends Component {
         dataSource,
         pagination: {
           current: params.current,
-          size: params.size,
+          pagesize: params.pagesize,
           total,
         },
       })

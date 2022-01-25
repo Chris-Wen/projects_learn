@@ -21,7 +21,7 @@ class AppletsManage extends Component {
       loading: true,
       editData: { name: '', appid: '' },
       dataSource: [],
-      pagination: { current: 1, size: 10, total: 0 },
+      pagination: { current: 1, pageSize: 10, total: 0 },
     }
   }
 
@@ -66,20 +66,14 @@ class AppletsManage extends Component {
     this.getData()
   }
 
-  onPageChange = (current, size) => {
-    this.getData({ current, size })
-  }
-  onSizeChange = (current, size) => {
-    this.getData({
-      current: 1,
-      size,
-    })
-  }
+  onPageChange = ({ current, pageSize }) => this.getData({ current, pageSize })
+
+  onSizeChange = (current, pageSize) => this.getData({ current: 1, pageSize })
 
   getData = async (params = {}) => {
     this.setState({ loading: true })
-    let { current, size } = { ...this.state.pagination, ...params }
-    params = { current, size }
+    let { current, pageSize } = { ...this.state.pagination, ...params }
+    params = { current, size: pageSize }
     let dataSource = []
     let total = 0
     let r = await getAppletsList()
@@ -87,7 +81,7 @@ class AppletsManage extends Component {
       dataSource = r.data.records
       total = r.data.total
     }
-    this.setState({ loading: false, dataSource, pagination: { current, size, total } })
+    this.setState({ loading: false, dataSource, pagination: { current, pageSize, total } })
   }
 
   /**

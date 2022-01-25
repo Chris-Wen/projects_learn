@@ -24,7 +24,7 @@ class OperationManage extends Component {
     pagination: {
       total: 0,
       current: 1,
-      size: 10,
+      pageSize: 10,
     },
   }
 
@@ -101,20 +101,14 @@ class OperationManage extends Component {
     this.getData()
   }
 
-  onPageChange = (current, size) => {
-    this.getData({ current, size })
-  }
-  onSizeChange = (current, size) => {
-    this.getData({
-      current: 1,
-      size,
-    })
-  }
+  onPageChange = ({ current, pageSize }) => this.getData({ current, pageSize })
+
+  onSizeChange = (current, pageSize) => this.getData({ current: 1, pageSize })
 
   getData = async (params = {}) => {
     this.setState({ loading: true })
-    let { current, size } = { ...this.state.pagination, ...params }
-    params = { current, size }
+    let { current, pageSize } = { ...this.state.pagination, ...params }
+    params = { current, size: pageSize }
     let dataSource = []
     let total = 0
     let r = await API.getBannerList(params)
@@ -126,7 +120,7 @@ class OperationManage extends Component {
     this.setState({
       loading: false,
       dataSource,
-      pagination: { current, size, total },
+      pagination: { current, pageSize, total },
     })
   }
 

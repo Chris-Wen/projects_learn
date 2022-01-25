@@ -132,6 +132,7 @@ class ClassManage extends Component {
   getData = async (_params = {}) => {
     this.setState({ loading: true })
     let params = { ...this.state.pagination, ...this.state.searchParams, ..._params }
+    params.size = params.pageSize
     try {
       delete params.total
     } catch (error) {}
@@ -148,7 +149,7 @@ class ClassManage extends Component {
       dataSource,
       pagination: {
         current: params.current,
-        size: params.size,
+        pageSize: params.pageSize,
         total,
       },
     })

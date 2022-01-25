@@ -257,6 +257,8 @@ module.exports = function (webpackEnv) {
             },
           },
           sourceMap: shouldUseSourceMap,
+          parallel: true, //此处为新增配置
+          extractComments: false,
         }),
         // This is only used in production mode
         new OptimizeCSSAssetsPlugin({
