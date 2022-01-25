@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { Table, Modal, Form, Button, Input, message, Popconfirm } from 'antd'
+import { Table, Modal, Form, Button, Input, message, Popconfirm, InputNumber } from 'antd'
 import ImageUploader from '@/components/ImageUploader'
 import Image from '@/components/Image'
 import { getStudentList, payment, refund, deleteStudent, cancelPayment } from '@/apis/classM'
@@ -256,7 +256,7 @@ let FormContent = Form.create({})((props) => {
                 { required: true, message: '请输入退款金额' },
                 { pattern: priceReg, message: '请输入正确金额' },
               ],
-            })(<Input.Number placeholder='请输入退款金额' min={0} allowClear />)}
+            })(<InputNumber placeholder='请输入退款金额' min={0} allowClear />)}
           </Form.Item>
           <Form.Item label='退款凭证'>
             {getFieldDecorator('refundVoucher', {

@@ -37,7 +37,6 @@ class CourseForm extends Component {
       gTags,
       cTags,
       customTag,
-      courseOption: props.subjects ?? [],
       gradeOption: '请先选择科目',
       courseType: props.courseType ?? [],
     }
@@ -79,16 +78,19 @@ class CourseForm extends Component {
 
   changeSubject = (val) => {
     val && this.getGradeData(val)
-    for (let i in this.state.courseOption) {
-      if (this.state.courseOption[i].id === val) {
-        this.props.form.setFieldsValue({ courseLabelIdList: [], ageId: [] })
-        this.setState({
-          tags: [this.state.courseOption[i]],
-          gTags: [],
-          cTags: [],
-          customTag: '',
-        })
-        return
+    let courseOption = this.props.subjects
+    if (courseOption) {
+      for (let i in courseOption) {
+        if (this.props.subjects[i].id === val) {
+          this.props.form.setFieldsValue({ courseLabelIdList: [], ageId: [] })
+          this.setState({
+            tags: [courseOption[i]],
+            gTags: [],
+            cTags: [],
+            customTag: '',
+          })
+          return
+        }
       }
     }
   }
@@ -141,7 +143,6 @@ class CourseForm extends Component {
   }
 
   handleTagClose = (id, type) => {
-    console.log(id, type)
     if (type === 'custom') {
       this.setState({ customTag: '' })
     } else {
@@ -188,7 +189,8 @@ class CourseForm extends Component {
       labelCol: { span: 4 },
       wrapperCol: { span: 16 },
     }
-    let { courseOption, gradeOption } = this.state
+    let { gradeOption } = this.state
+    let courseOption = this.props.subjects
     let {
       state: t,
       props: { dataSource: data },
