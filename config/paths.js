@@ -67,6 +67,7 @@ module.exports = {
   appNodeModules: resolveApp('node_modules'),
   swSrc: resolveModule(resolveApp, 'src/service-worker'),
   publicUrlOrPath,
+  antdIcons: resolveApp('src/utils/antdIcons.js'),
 }
 
 module.exports.moduleFileExtensions = moduleFileExtensions

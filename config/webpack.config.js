@@ -27,6 +27,10 @@ const ForkTsCheckerWebpackPlugin = require('react-dev-utils/ForkTsCheckerWebpack
 const typescriptFormatter = require('react-dev-utils/typescriptFormatter')
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin')
 
+//打包分析
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
+const withReport = process.env.npm_config_withReport
+
 const postcssNormalize = require('postcss-normalize')
 
 const appPackageJson = require(paths.appPackageJson)
@@ -320,6 +324,7 @@ module.exports = function (webpackEnv) {
         }),
         ...(modules.webpackAliases || {}),
         '@': paths.appSrc,
+        '@ant-design/icons/lib/dist': paths.antdIcons,
       },
       plugins: [
         // Adds support for installing with Plug'n'Play, leading to faster installs and adding
@@ -522,6 +527,7 @@ module.exports = function (webpackEnv) {
       ],
     },
     plugins: [
+      // new BundleAnalyzerPlugin({ analyzerPort: 9000 }),
       // Generates an `index.html` file with the <script> injected.
       new HtmlWebpackPlugin(
         Object.assign(
