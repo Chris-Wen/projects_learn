@@ -32,7 +32,9 @@ export default class ModalWrapComponent extends Component {
     const { state: t } = this
     return (
       <Modal visible={t.visible} {...t.config} footer={null} onCancel={this.hideModal}>
-        {t.visible ? <AsyncComponent path={t.config.path} {...t.props} hideModal={this.hideModal} /> : null}
+        <div style={{ maxHeight: '80vh', 'overflow-y': 'scroll' }}>
+          {t.visible && <AsyncComponent path={t.config.path} {...t.props} hideModal={this.hideModal} />}
+        </div>
       </Modal>
     )
   }
