@@ -7,17 +7,19 @@ import RecordTabComponent from './recordTabComponent'
 
 function ClassDetail(props = {}) {
   return (
-    <Tabs defaultActiveKey={props.tabIndex}>
-      <Tabs.TabPane tab='班级详情' key='1'>
-        <DetailTabComponent {...props} />
-      </Tabs.TabPane>
-      <Tabs.TabPane tab='花名册' key='2'>
-        <ListTabComponent {...props} />
-      </Tabs.TabPane>
-      <Tabs.TabPane tab='签到记录' key='3'>
-        <RecordTabComponent {...props} />
-      </Tabs.TabPane>
-    </Tabs>
+    <div style={{ minHeight: '80vh' }}>
+      <Tabs defaultActiveKey={props.tabIndex}>
+        <Tabs.TabPane tab='班级详情' key='1'>
+          <DetailTabComponent {...props} />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab='花名册' key='2'>
+          <ListTabComponent {...props} />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab='签到记录' key='3'>
+          <RecordTabComponent {...props} />
+        </Tabs.TabPane>
+      </Tabs>
+    </div>
   )
 }
 

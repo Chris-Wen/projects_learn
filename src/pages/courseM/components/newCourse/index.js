@@ -39,6 +39,7 @@ class CourseForm extends Component {
       customTag,
       gradeOption: '请先选择科目',
       courseType: props.courseType ?? [],
+      btnLoading: false,
     }
   }
 
@@ -162,17 +163,25 @@ class CourseForm extends Component {
 
   handleTagChange = (val, obj) => this.setState(obj)
 
-  handleSubmit = () => {
+  handleSubmit = async () => {
+    // if (this.state.btnLoading) return
+    // console.log(11)
+    // this.setState({ btnLoading: true })
+    // let r = await updateCourse({})
+    // this.setState({ btnLoading: false })
     this.props.form.validateFields(async (err, params) => {
       if (!err) {
         params.courseLogo = params.courseFirstPicture[0]
         params.priceWithScore = `${params.priceWithScore}`
         let isUpdate = !!this.props?.dataSource?.id
         if (isUpdate) params.id = this.props?.dataSource?.id
-
+        if (this.state.btnLoading) return
+        this.setState({ btnLoading: true })
         let r = await (isUpdate ? updateCourse(params) : addCourse(params))
+        this.setState({ btnLoading: false })
         if (resJudge(r)) {
           message.success(isUpdate ? '修改成功' : '创建成功')
+          !isUpdate && this.props.form.resetFields()
           setTimeout(() => {
             this.props.hideModal()
           }, 1000)
@@ -355,7 +364,7 @@ class CourseForm extends Component {
           积分
         </Form.Item>
         <Form.Item wrapperCol={{ span: 16, offset: 4 }}>
-          <Button type='primary' onClick={this.handleSubmit}>
+          <Button type='primary' onClick={this.handleSubmit} loading={t.btnLoading} disabled={t.btnLoading}>
             提交
           </Button>
         </Form.Item>

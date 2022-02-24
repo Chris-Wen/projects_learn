@@ -101,8 +101,7 @@ class OperationManage extends Component {
     this.getData()
   }
 
-  onPageChange = ({ current, pageSize }) => this.getData({ current, pageSize })
-
+  onPageChange = (current, pageSize) => this.getData({ current, pageSize })
   onSizeChange = (current, pageSize) => this.getData({ current: 1, pageSize })
 
   getData = async (params = {}) => {
@@ -129,11 +128,11 @@ class OperationManage extends Component {
    * @param {Boolean} isAdd
    * @param {Object} editData
    */
-  handleModalStat = (editData = { imageUrl: '', jumpUrl: '' }) => {
+  handleModalStat = ({ imageUrl, jumpUrl, id }) => {
     this.setState(({ visible }) => ({
       visible: !visible,
-      isAddAction: !editData.id,
-      editData,
+      isAddAction: !id,
+      editData: { imageUrl, jumpUrl, id },
     }))
   }
 
@@ -166,6 +165,7 @@ class OperationManage extends Component {
         }
         let r = await (params.id ? API.updateBData(params) : API.addBData(params))
         resJudge(r) && message.success(params.id ? '更新成功' : '新增成功')
+        !params.id && this.childRefForm.resetFields()
 
         setTimeout(() => {
           this.getData()
@@ -184,13 +184,14 @@ class OperationManage extends Component {
 
     return (
       <div className='page-tb'>
-        <Button type='primary' icon='plus' onClick={() => this.handleModalStat()} style={{ marginBottom: 16 }}>
+        <Button type='primary' icon='plus' onClick={this.handleModalStat} style={{ marginBottom: 16 }}>
           新建
         </Button>
         <Table
           pagination={{
             ...t.pagination,
             showSizeChanger: true,
+            showQuickJumper: true,
             showTotal: (total) => `共${total}条数据`,
             onShowSizeChange: this.onSizeChange,
             onChange: this.onPageChange,
@@ -209,7 +210,7 @@ class OperationManage extends Component {
           cancelText='取消'
           confirmLoading={t.btnLoading}
         >
-          <ModalFormCreate {...t.editData} onChildEvent={this.handleChildEvent} />
+          {t.visible && <ModalFormCreate {...t.editData} onChildEvent={this.handleChildEvent} />}
         </Modal>
       </div>
     )

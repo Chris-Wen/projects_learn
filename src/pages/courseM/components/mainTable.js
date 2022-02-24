@@ -88,7 +88,12 @@ const MainTable = (props) => {
     <Table
       columns={columns}
       {...props}
-      pagination={{ ...props.pagination, showSizeChanger: true, showTotal: (total) => `共${total}条数据` }}
+      pagination={{
+        ...props.pagination,
+        showSizeChanger: true,
+        showQuickJumper: true,
+        showTotal: (total) => `共${total}条数据`,
+      }}
     />
   )
 }
@@ -100,9 +105,10 @@ MainTable.propTypes = {
     total: PropTypes.number,
     current: PropTypes.number,
     pageSize: PropTypes.number,
+    onSizeChange: PropTypes.func,
+    onChange: PropTypes.func,
   }),
-  onSizeChange: PropTypes.func,
-  onChange: PropTypes.func,
+
   onConfirm: PropTypes.func,
 }
 
@@ -113,9 +119,9 @@ MainTable.defaultProps = {
     total: 0,
     current: 1,
     pageSize: 10,
+    onSizeChange: () => {},
+    onChange: () => {},
   },
-  onSizeChange: () => {},
-  onChange: () => {},
   onConfirm: () => {},
 }
 

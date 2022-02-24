@@ -49,7 +49,8 @@ export default class RecordTabComponent extends Component {
 
         dataSource = studentList
         let { current } = this.state
-        dateList = [...new Set(signDateList)].sort((a, b) => (b > a ? 1 : -1))
+        // dateList = [...new Set(signDateList)].sort((a, b) => (b > a ? 1 : -1))
+        dateList = signDateList
 
         if (dateList?.length) {
           dataSource.forEach((item) => {
@@ -74,7 +75,15 @@ export default class RecordTabComponent extends Component {
               let isCurrent = key === current
               columns.push({
                 align: 'center',
-                title: isCurrent ? `${key}(今日签到)` : key,
+                title: isCurrent ? (
+                  <>
+                    {key}
+                    <br />
+                    (今日签到)
+                  </>
+                ) : (
+                  key
+                ),
                 className: isCurrent ? 'colored-bg' : '',
                 width: 120,
                 dataIndex: key,
@@ -100,8 +109,7 @@ export default class RecordTabComponent extends Component {
         status: { todaySignStatus },
       } = this.state
 
-      if (todaySignStatus) dateList.splice(0, 1)
-      params = dateList
+      if (todaySignStatus) params = dateList.slice(1, dateList.length)
     }
     this.modalRef.current.init(params)
   }
@@ -244,7 +252,7 @@ class WrapDialog extends Component {
 
   render() {
     let { visible, title, signDateList, signDate, data, loading } = this.state
-
+    console.log(signDate)
     return (
       <Modal
         visible={visible}
@@ -265,10 +273,10 @@ class WrapDialog extends Component {
         }
         onCancel={this.onCancel}
       >
-        {signDateList?.length ? (
+        {signDateList.length > 0 && (
           <div>
             上课日期：
-            <Select defaultValue={signDate} onChange={this.handleChange} style={{ width: 200 }}>
+            <Select value={signDate} onChange={this.handleChange} style={{ width: 200 }}>
               {signDateList?.map((item) => (
                 <Select.Option value={item} key={item}>
                   {item}
@@ -276,7 +284,7 @@ class WrapDialog extends Component {
               ))}
             </Select>
           </div>
-        ) : null}
+        )}
         <Table
           pagination={false}
           columns={this.columns}

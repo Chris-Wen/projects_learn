@@ -107,6 +107,7 @@ class NewClass extends Component {
 
         let r = await (this.props?.dataSource?.id ? updateClass(params) : addClass(params))
         if (resJudge(r)) {
+          !isAdd && this.props.form.resetFields()
           message.success('操作成功')
 
           setTimeout(() => {

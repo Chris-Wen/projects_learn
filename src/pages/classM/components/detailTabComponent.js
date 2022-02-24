@@ -57,6 +57,7 @@ export default class DetailTabComponent extends Component {
       case 'CAN_REGISTRATION':
       case 'REGISTRATION_FULL':
       case 'REGISTRATION_DEADLINE':
+      case 'NOT_CLASS':
         return true
       default:
         return false
