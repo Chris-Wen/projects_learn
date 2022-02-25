@@ -53,6 +53,17 @@ class CourseForm extends Component {
     }
   }
 
+  validCourseLabel = (rule, value, callback) => {
+    setTimeout(() => {
+      if (this.state.customTag || (value && value.length > 0)) {
+        console.log(true)
+        callback()
+      } else {
+        callback('请选择课程标签')
+      }
+    }, 0)
+  }
+
   getGradeData = async (id) => {
     let r = await getGrade(id)
     resJudge(r) && this.setState({ gradeOption: r.data })
@@ -161,18 +172,14 @@ class CourseForm extends Component {
     }
   }
 
-  handleTagChange = (val, obj) => this.setState(obj)
+  handleTagChange = (_, obj) => this.setState(obj)
 
   handleSubmit = async () => {
-    // if (this.state.btnLoading) return
-    // console.log(11)
-    // this.setState({ btnLoading: true })
-    // let r = await updateCourse({})
-    // this.setState({ btnLoading: false })
     this.props.form.validateFields(async (err, params) => {
       if (!err) {
         params.courseLogo = params.courseFirstPicture[0]
         params.priceWithScore = `${params.priceWithScore}`
+        params.courseCustomizeLabel = this.state.customTag
         let isUpdate = !!this.props?.dataSource?.id
         if (isUpdate) params.id = this.props?.dataSource?.id
         if (this.state.btnLoading) return
@@ -252,9 +259,16 @@ class CourseForm extends Component {
             />,
           )}
         </Form.Item>
-        <Form.Item label='课程标签'>
+        <Form.Item
+          className='ant-form-item-required'
+          label={
+            <>
+              <span style={{ color: '#f5222d', fontWeight: 'bold', lineHeight: '19px' }}>*</span> 课程标签
+            </>
+          }
+        >
           {getFieldDecorator('courseLabelIdList', {
-            rules: [{ required: true, message: '请选择课程标签' }],
+            rules: [{ validator: this.validCourseLabel }],
             initialValue: data?.courseLabelList ? data?.courseLabelList?.map(({ id }) => id) : [],
           })(
             <TagsSelection

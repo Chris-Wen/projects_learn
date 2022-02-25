@@ -170,6 +170,7 @@ class ClassManage extends Component {
             pagination={{
               ...t.pagination,
               showSizeChanger: true,
+              showQuickJumper: true,
               showTotal: (total) => `共${total}条数据`,
               onShowSizeChange: this.onSizeChange,
               onChange: this.onPageChange,

@@ -43,10 +43,7 @@ class CourseManage extends Component {
     this.getData()
     !this.props.courseType.length && this.props.getCourseTypeAction()
   }
-  onPageChange = (current, pageSize) => {
-    console.log(current, pageSize)
-    this.getData({ current, pageSize })
-  }
+  onPageChange = (current, pageSize) => this.getData({ current, pageSize })
 
   // onSizeChange = (current, pagesize) => this.getData({ current: 1, pagesize })
 
@@ -140,7 +137,12 @@ class CourseManage extends Component {
           <MainTable
             dataSource={t.dataSource}
             loading={t.loading}
-            pagination={{ ...t.pagination, onChange: this.onPageChange, onSizeChange: this.onPageChange }}
+            pagination={{
+              ...t.pagination,
+              showQuickJumper: true,
+              onChange: this.onPageChange,
+              onSizeChange: this.onPageChange,
+            }}
             onStateChange={this.handleStat}
             showDetail={this.handleDetail}
             rowKey='id'

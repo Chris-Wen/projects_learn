@@ -21,7 +21,7 @@ export default class RecordTabComponent extends Component {
       title: '学员姓名',
       dataIndex: 'studentName',
       width: 120,
-      fixed: 'left',
+      // fixed: 'left',
     },
   ]
 
@@ -146,7 +146,7 @@ export default class RecordTabComponent extends Component {
           rowKey='studentRegId'
           dataSource={dataSource}
           loading={loading}
-          scroll={{ x: '65vh', y: '60vh' }}
+          scroll={{ x: 'maxContent' }}
         ></Table>
         <WrapDialog
           ref={this.modalRef}
@@ -252,7 +252,6 @@ class WrapDialog extends Component {
 
   render() {
     let { visible, title, signDateList, signDate, data, loading } = this.state
-    console.log(signDate)
     return (
       <Modal
         visible={visible}
