@@ -5,5 +5,4 @@ module.exports = {
     jsxSingleQuote: true,
     printWidth: 120,
     tabWidth: 4,
-    arrowParens: 'avoid', // 单个参数的箭头函数不加括号 x => x
 }

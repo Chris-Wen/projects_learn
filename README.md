@@ -1,46 +1,49 @@
 # Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+### 配置文件相关文章
+- [dotfiles相关](https://zhuanlan.zhihu.com/p/104742911)
+    - .gitignore
+    - .editorconfig
+    - .nvmrc
+    - .npmrc
+    - LICENSE - MIT
+    - package.json
+    - .vscode/settings.jsonc
+    - .vscode/extensions.json
+    
+    
+- [linters 和 formatter相关](https://zhuanlan.zhihu.com/p/105038375)
+    - eslint: 配置生成器命令 `npx eslint --init`
+        > Find and fix problems in your JavaScript code
+    - stylelint:
+        > A mighty, modern linter that helps you avoid errors and enforce conventions in your styles
 
-## Available Scripts
+    - prettier 代码格式化
+        [配置参数详解](https://juejin.cn/post/6970267363845341220)
+        [官网参数解析](https://prettier.io/docs/en/options.html)
 
-In the project directory, you can run:
+    - linters 和 prettier 的冲突
+        [官方文档](https://prettier.io/docs/en/integrating-with-linters.html)
+        安装 `eslint-config-prettier`, 这个插件会禁用所有会和 prettier 起冲突的规则。
+        添加 'prettier' 到extends 配置：
+        ``` json
+        // .eslintrc.js
+        {
+            extends: [
+                'airbnb',
+                'airbnb/hooks',
+                'plugin:eslint-comments/recommended',
+                'plugin:import/typescript',
+                'plugin:react/recommended',
+                'plugin:@typescript-eslint/recommended',
+                'plugin:unicorn/recommended',
+                'prettier',
+            ],
+        }
+        ```
+        这里注意要把 prettier 放最后面，因为这样才能让 prettier 有机会禁用前面所有的 extends 中配置的会起冲突的规则。
 
-### `npm start`
+    - lint-staged
+        每次提交代码都要对代码先进行 lint 和格式化，确保团队的代码风格统一
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+- [webpack相关配置](https://blog.csdn.net/qq_39523606/article/details/104408796?spm=1001.2014.3001.5502)
