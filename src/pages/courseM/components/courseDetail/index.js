@@ -57,6 +57,12 @@ const CourseDetail = (props) => {
         {props?.priceWithScore}
         积分
       </Form.Item>
+      <div className={cx('sub-title')}>达人管理</div>
+      {props?.talentName ? (
+        <Form.Item label='达人信息：'>
+          {props?.talentName} - {props?.talentMobile}
+        </Form.Item>
+      ) : null}
     </Form>
   )
 }

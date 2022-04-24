@@ -66,7 +66,7 @@ class AppletsManage extends Component {
     this.getData()
   }
 
-  onPageChange = ({ current, pageSize }) => this.getData({ current, pageSize })
+  onPageChange = (current, pageSize) => this.getData({ current, pageSize })
 
   onSizeChange = (current, pageSize) => this.getData({ current: 1, pageSize })
 
@@ -76,7 +76,7 @@ class AppletsManage extends Component {
     params = { current, size: pageSize }
     let dataSource = []
     let total = 0
-    let r = await getAppletsList()
+    let r = await getAppletsList(params)
     if (resJudge(r)) {
       dataSource = r.data.records
       total = r.data.total

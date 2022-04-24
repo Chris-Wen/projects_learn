@@ -43,9 +43,10 @@ class CourseManage extends Component {
     this.getData()
     !this.props.courseType.length && this.props.getCourseTypeAction()
   }
-  onPageChange = (current, pageSize) => this.getData({ current, pageSize })
-
-  // onSizeChange = (current, pagesize) => this.getData({ current: 1, pagesize })
+  onPageChange = (current, pageSize) => {
+    console.log(current, pageSize)
+    this.getData({ current, pageSize })
+  }
 
   handleSearch = (params = {}) => {
     this.setState(({ searchParams }) => ({ searchParams: { ...searchParams, ...params } }))
@@ -139,9 +140,10 @@ class CourseManage extends Component {
             loading={t.loading}
             pagination={{
               ...t.pagination,
+              showSizeChanger: true,
               showQuickJumper: true,
               onChange: this.onPageChange,
-              onSizeChange: this.onPageChange,
+              onShowSizeChange: this.onPageChange,
             }}
             onStateChange={this.handleStat}
             showDetail={this.handleDetail}

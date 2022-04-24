@@ -112,7 +112,6 @@ class ClassManage extends Component {
     this.getData()
   }
   onPageChange = (current, pageSize) => this.getData({ current, pageSize })
-  onSizeChange = (_, pageSize) => this.getData({ current: 1, pageSize })
 
   handleModalStat = (name = 'newClass', props = {}) => {
     let config = {
@@ -172,7 +171,7 @@ class ClassManage extends Component {
               showSizeChanger: true,
               showQuickJumper: true,
               showTotal: (total) => `共${total}条数据`,
-              onShowSizeChange: this.onSizeChange,
+              onShowSizeChange: this.onPageChange,
               onChange: this.onPageChange,
             }}
             rowKey='id'

@@ -15,12 +15,15 @@ import CloseCircleOutline from '@ant-design/icons/lib/outline/CloseCircleOutline
 import InfoCircleOutline from '@ant-design/icons/lib/outline/InfoCircleOutline'
 import LoadingOutline from '@ant-design/icons/lib/outline/LoadingOutline'
 import ClockCircleOutline from '@ant-design/icons/lib/outline/ClockCircleOutline'
+import QuestionCircleOutline from '@ant-design/icons/lib/outline/QuestionCircleOutline'
+import EyeOutline from '@ant-design/icons/lib/outline/EyeOutline'
 // fill 实底风格
 import CheckCircleFill from '@ant-design/icons/lib/fill/CheckCircleFill'
 import CloseCircleFill from '@ant-design/icons/lib/fill/CloseCircleFill'
 import ExclamationCircleFill from '@ant-design/icons/lib/fill/ExclamationCircleFill'
 import InfoCircleFill from '@ant-design/icons/lib/fill/InfoCircleFill'
 import ClockCircleFill from '@ant-design/icons/lib/fill/ClockCircleFill'
+import QuestionCircleFill from '@ant-design/icons/lib/fill/QuestionCircleFill'
 
 export {
   CheckCircleFill,
@@ -39,4 +42,7 @@ export {
   ClockCircleOutline,
   CloseCircleOutline,
   ClockCircleFill,
+  QuestionCircleOutline,
+  QuestionCircleFill,
+  EyeOutline,
 }

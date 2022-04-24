@@ -1,9 +1,9 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { Button, Form, Input, Radio, InputNumber, message } from 'antd'
+import { Button, Form, Input, Radio, InputNumber, Select, message } from 'antd'
 import ImageUploader from '@/components/ImageUploader'
 import { getGrade } from '@/apis/global'
-import { getCourseLabel, addCourse, updateCourse } from '@/apis/course'
+import { getCourseLabel, addCourse, updateCourse, getTalentList } from '@/apis/course'
 import { resJudge } from '@/utils/global'
 import { SubjectPopContent, PopoverSelection, GradePopContent, TagsSelection } from './component'
 import { integerReg, priceReg } from '@/utils/reg'
@@ -15,9 +15,8 @@ import classNames from 'classnames/bind'
 let cx = classNames.bind(styles)
 
 class CourseForm extends Component {
-  static propTypes = { dataSource: PropTypes.object }
-
   static propTypes = {
+    dataSource: PropTypes.object,
     subjects: PropTypes.array.isRequired,
     courseType: PropTypes.array.isRequired,
   }
@@ -40,6 +39,7 @@ class CourseForm extends Component {
       gradeOption: '请先选择科目',
       courseType: props.courseType ?? [],
       btnLoading: false,
+      talentList: [],
     }
   }
 
@@ -82,10 +82,19 @@ class CourseForm extends Component {
   }
 
   async componentDidMount() {
+    console.log('didMount')
     !this.props.subjects.length && this.props.getSubjectsAction()
     !this.props.courseType.length && this.props.getCourseTypeAction()
 
     this.props?.dataSource?.subjectId && this.getGradeData(this.props.dataSource.subjectId)
+    if (this.state?.talentList?.length === 0) {
+      let r = await getTalentList()
+      if (resJudge(r)) {
+        this.setState({
+          talentList: r.data,
+        })
+      }
+    }
   }
 
   changeSubject = (val) => {
@@ -184,6 +193,18 @@ class CourseForm extends Component {
         if (isUpdate) params.id = this.props?.dataSource?.id
         if (this.state.btnLoading) return
         this.setState({ btnLoading: true })
+        console.log(params)
+        if (params?.isTalent) {
+          for (let i = 0, len = this.state.talentList.length; i < len; i++) {
+            if (this.state.talentList[i].talentMobile === params?.talentMobile) {
+              params.talentName = this.state.talentList[i].talentName
+              break
+            }
+          }
+        } else {
+          params.talentName = null
+          params.talentMobile = null
+        }
         let r = await (isUpdate ? updateCourse(params) : addCourse(params))
         this.setState({ btnLoading: false })
         if (resJudge(r)) {
@@ -205,7 +226,7 @@ class CourseForm extends Component {
       labelCol: { span: 4 },
       wrapperCol: { span: 16 },
     }
-    let { gradeOption } = this.state
+    let { gradeOption, talentList } = this.state
     let courseOption = this.props.subjects
     let {
       state: t,
@@ -377,7 +398,35 @@ class CourseForm extends Component {
           })(<InputNumber min={1} max={100000} className={cx('input')} placeholder='请输入' />)}
           积分
         </Form.Item>
-        <Form.Item wrapperCol={{ span: 16, offset: 4 }}>
+        <div className={cx('sub-title')}>达人关联</div>
+        <Form.Item label='是否关联达人'>
+          {getFieldDecorator('isTalent', {
+            initialValue: Boolean(data?.talentMobile),
+          })(
+            <Radio.Group>
+              <Radio value={false}>不关联</Radio>
+              <Radio value={true}>关联 (如果该课程由达人提供服务，则选择该项)</Radio>
+            </Radio.Group>,
+          )}
+        </Form.Item>
+        {this.props.form.getFieldValue('isTalent') ? (
+          <Form.Item label='关联达人'>
+            {getFieldDecorator('talentMobile', {
+              rules: [{ required: true, message: '请选择达人' }],
+              initialValue: data?.talentMobile,
+            })(
+              <Select placeholder='请选择达人' className={cx('input')}>
+                {talentList?.map((item) => (
+                  <Select.Option key={item?.talentMobile} value={item?.talentMobile}>
+                    {item?.talentName}
+                  </Select.Option>
+                ))}
+              </Select>,
+            )}
+          </Form.Item>
+        ) : null}
+
+        <Form.Item wrapperCol={{ span: 16, offset: 4 }} style={{ paddingBottom: '5em' }}>
           <Button type='primary' onClick={this.handleSubmit} loading={t.btnLoading} disabled={t.btnLoading}>
             提交
           </Button>

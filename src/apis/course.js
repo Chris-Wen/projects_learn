@@ -27,3 +27,8 @@ export async function getCourseDetail(courseId) {
 export async function changeCourseStat(courseId) {
   return await request.get('/manage/course/upOrDown', { courseId })
 }
+
+//获取达人列表
+export async function getTalentList() {
+  return await request.get('/manage/course/getTalentList')
+}

@@ -133,6 +133,37 @@ const request = {
     }
     return service.delete(`${url}${_params}`)
   },
+  jsonp(url, params) {
+    let _params
+    if (Object.is(params, undefined)) {
+      _params = ''
+    } else {
+      _params = '?'
+      for (const key in params) {
+        // eslint-disable-next-line no-prototype-builtins
+        if (params.hasOwnProperty(key) && params[key] !== null) {
+          _params += `${key}=${params[key]}&`
+        }
+      }
+    }
+    return new Promise((resolve, reject) => {
+      let callbackName = 'jsonCallBack'
+      if (params.callback) {
+        callbackName = params.callback
+      }
+      window[callbackName] = (result) => {
+        resolve(result)
+        window[callbackName] = null
+      }
+      var JSONP = document.createElement('script')
+      JSONP.type = 'text/javascript'
+      JSONP.src = `${url}${params.callback ? _params : _params + '&callback=' + callbackName}`
+      document.getElementsByTagName('head')[0].appendChild(JSONP)
+      setTimeout(() => {
+        document.getElementsByTagName('head')[0].removeChild(JSONP)
+      }, 500)
+    })
+  },
 }
 
 function tansParams(params) {

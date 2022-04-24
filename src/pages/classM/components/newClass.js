@@ -1,11 +1,11 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types'
-import { Form, Input, InputNumber, Radio, DatePicker, Select, Button, TimePicker, Row, Col, message } from 'antd'
+import { Form, Input, InputNumber, Radio, DatePicker, Select, Button, message } from 'antd'
 import moment from 'moment'
 import 'moment/locale/zh-cn'
 import { zywReg20, integerReg } from '@/utils/reg'
-import { resJudge, WEEKOPTIONS } from '@/utils/global'
+import { resJudge } from '@/utils/global'
 import { getCourseList, getClassRoomList, updateClass, addClass } from '@/apis/classM'
+import TimeGroupSelect from '@/components/TimeGroupSelect'
 
 moment.locale('zh-cn')
 class NewClass extends Component {
@@ -51,6 +51,7 @@ class NewClass extends Component {
       weekArr = null
     } else callback()
   }
+
   signTimeValidator = (_, values, callback) => {
     if (values && values.length === 2) {
       let endTime = values[1]
@@ -230,7 +231,7 @@ class NewClass extends Component {
               { validator: this.classTimeValidator },
             ],
             initialValue: p?.classTimeList,
-          })(<ClassTimeGroup />)}
+          })(<TimeGroupSelect />)}
         </Form.Item>
         <Form.Item>
           <div style={{ textAlign: 'center' }}>
@@ -247,102 +248,102 @@ class NewClass extends Component {
   }
 }
 
-class ClassTimeGroup extends Component {
-  static propTypes = {
-    value: PropTypes.array,
-    onChange: PropTypes.func,
-  }
+// class ClassTimeGroup extends Component {
+//   static propTypes = {
+//     value: PropTypes.array,
+//     onChange: PropTypes.func,
+//   }
 
-  constructor(props) {
-    super(props)
-    let timeGroup = props.value || [{ week: null, startTime: null, endTime: null }]
-    this.state = {
-      timeGroup,
-      options: WEEKOPTIONS,
-    }
-  }
+//   constructor(props) {
+//     super(props)
+//     let timeGroup = props.value || [{ week: null, startTime: null, endTime: null }]
+//     this.state = {
+//       timeGroup,
+//       options: WEEKOPTIONS,
+//     }
+//   }
 
-  addLine = () => {
-    if (this.state.timeGroup.length >= 7) return
+//   addLine = () => {
+//     if (this.state.timeGroup.length >= 7) return
 
-    this.setState(({ timeGroup }) => {
-      timeGroup.push({
-        week: null,
-        startTime: null,
-        endTime: null,
-      })
-      this.props.onChange && this.props.onChange(timeGroup)
-      return { timeGroup }
-    })
-  }
+//     this.setState(({ timeGroup }) => {
+//       timeGroup.push({
+//         week: null,
+//         startTime: null,
+//         endTime: null,
+//       })
+//       this.props.onChange && this.props.onChange(timeGroup)
+//       return { timeGroup }
+//     })
+//   }
 
-  handleChange = (i, type, ...arg) => {
-    let timeGroup = this.state.timeGroup
-    timeGroup[i][type] = type === 'week' ? arg[0] : arg[1]
+//   handleChange = (i, type, ...arg) => {
+//     let timeGroup = this.state.timeGroup
+//     timeGroup[i][type] = type === 'week' ? arg[0] : arg[1]
 
-    this.props.onChange && this.props.onChange(timeGroup)
+//     this.props.onChange && this.props.onChange(timeGroup)
 
-    this.setState({ timeGroup })
-  }
+//     this.setState({ timeGroup })
+//   }
 
-  delLine = (i) => {
-    this.setState(({ timeGroup }) => {
-      timeGroup.splice(i, 1)
-      this.props.onChange && this.props.onChange(timeGroup)
-      return { timeGroup }
-    })
-  }
+//   delLine = (i) => {
+//     this.setState(({ timeGroup }) => {
+//       timeGroup.splice(i, 1)
+//       this.props.onChange && this.props.onChange(timeGroup)
+//       return { timeGroup }
+//     })
+//   }
 
-  render() {
-    let { timeGroup, options } = this.state
+//   render() {
+//     let { timeGroup, options } = this.state
 
-    return (
-      <Row>
-        <Col span={20}>
-          {timeGroup.map((item, i) => (
-            <div key={i}>
-              <Select
-                showSearch
-                placeholder='请选择'
-                style={{ width: 100, marginRight: 20 }}
-                filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-                onChange={(...arg) => this.handleChange(i, 'week', ...arg)}
-                defaultValue={item.week}
-                allowClear
-              >
-                {options.map((obj) => (
-                  <Select.Option value={obj.value} key={obj.value}>
-                    {obj.text}
-                  </Select.Option>
-                ))}
-              </Select>
-              <TimePicker
-                value={item.startTime ? moment(item.startTime, 'HH:mm') : null}
-                format='HH:mm:ss'
-                onChange={(...arg) => this.handleChange(i, 'startTime', ...arg)}
-              />{' '}
-              —{' '}
-              <TimePicker
-                value={item.endTime ? moment(item.endTime, 'HH:mm') : null}
-                format='HH:mm:ss'
-                onChange={(...arg) => this.handleChange(i, 'endTime', ...arg)}
-              />{' '}
-              {timeGroup.length > 1 ? (
-                <Button type='danger' shape='circle' icon='delete' size='small' onClick={() => this.delLine(i)} />
-              ) : (
-                ''
-              )}
-            </div>
-          ))}
-        </Col>
-        <Col span={2}>
-          {timeGroup.length < 7 ? (
-            <Button type='primary' shape='circle' size='small' icon='plus' onClick={this.addLine} />
-          ) : null}
-        </Col>
-      </Row>
-    )
-  }
-}
+//     return (
+//       <Row>
+//         <Col span={20}>
+//           {timeGroup.map((item, i) => (
+//             <div key={i}>
+//               <Select
+//                 showSearch
+//                 placeholder='请选择'
+//                 style={{ width: 100, marginRight: 20 }}
+//                 filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+//                 onChange={(...arg) => this.handleChange(i, 'week', ...arg)}
+//                 defaultValue={item.week}
+//                 allowClear
+//               >
+//                 {options.map((obj) => (
+//                   <Select.Option value={obj.value} key={obj.value}>
+//                     {obj.text}
+//                   </Select.Option>
+//                 ))}
+//               </Select>
+//               <TimePicker
+//                 value={item.startTime ? moment(item.startTime, 'HH:mm') : null}
+//                 format='HH:mm:ss'
+//                 onChange={(...arg) => this.handleChange(i, 'startTime', ...arg)}
+//               />{' '}
+//               —{' '}
+//               <TimePicker
+//                 value={item.endTime ? moment(item.endTime, 'HH:mm') : null}
+//                 format='HH:mm:ss'
+//                 onChange={(...arg) => this.handleChange(i, 'endTime', ...arg)}
+//               />{' '}
+//               {timeGroup.length > 1 ? (
+//                 <Button type='danger' shape='circle' icon='delete' size='small' onClick={() => this.delLine(i)} />
+//               ) : (
+//                 ''
+//               )}
+//             </div>
+//           ))}
+//         </Col>
+//         <Col span={2}>
+//           {timeGroup.length < 7 ? (
+//             <Button type='primary' shape='circle' size='small' icon='plus' onClick={this.addLine} />
+//           ) : null}
+//         </Col>
+//       </Row>
+//     )
+//   }
+// }
 
 export default Form.create({})(NewClass)

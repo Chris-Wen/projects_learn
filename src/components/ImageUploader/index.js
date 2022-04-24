@@ -40,10 +40,16 @@ export default class ImageUploader extends Component {
   }
 
   handleChange = ({ fileList }) => {
+    console.log(fileList)
     if (this.props.onChange && !fileList.some(({ status }) => status === 'uploading')) {
       let _fl = []
       fileList?.forEach((item, i) => {
         let { status, response: r, url } = item
+        if (item?.type && item?.size && !this.beforeUpload(item, false)) {
+          fileList.splice(i, 1)
+          this.setState({ fileList })
+          return
+        }
         if (status === 'error' || (r && r.code !== 200)) {
           notification.error({
             message: '图片上传失败',
@@ -53,7 +59,7 @@ export default class ImageUploader extends Component {
           this.setState({ fileList })
           return
         } else {
-          _fl.push(url || r.data)
+          _fl.push(url || r?.data)
         }
       })
       this.props.onChange(this.props.limit > 1 ? _fl : _fl[0] || '')
@@ -61,26 +67,29 @@ export default class ImageUploader extends Component {
     this.setState({ fileList })
   }
 
-  beforeUpload = ({ size, type }) => {
+  beforeUpload = ({ size, type }, valid = true) => {
     if (type && !/^image/.test(type)) {
-      notification.warning({
-        key: 'updatable',
-        message: '仅支持上传图片',
-      })
+      valid &&
+        notification.warning({
+          key: 'updatable',
+          message: '仅支持上传图片',
+        })
       return false
     } else if (size >= this.props.maxSize) {
-      notification.warning({
-        key: 'updatable',
-        message: '图片过大，无法上传',
-      })
+      valid &&
+        notification.warning({
+          key: 'updatable',
+          message: '图片过大，无法上传',
+        })
       return false
     } else {
       let accpet = type.split('/')[1]
       if (this.props.accept && !this.props.accept.includes(accpet)) {
-        notification.warning({
-          key: 'updatable',
-          message: '图片格式不支持',
-        })
+        valid &&
+          notification.warning({
+            key: 'updatable',
+            message: '图片格式不支持',
+          })
         return false
       }
     }
